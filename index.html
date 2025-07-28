@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lilota - TCL-Based IoT Firmware for Microcontrollers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #fff;
+            color: #667eea;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 0 0.5rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .features {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .platforms {
+            background: #f8f9fa;
+            padding: 4rem 0;
+        }
+
+        .platforms h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .platform-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .platform-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .code-example pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .code-example .comment {
+            color: #68d391;
+        }
+
+        .code-example .keyword {
+            color: #63b3ed;
+        }
+
+        .code-example .string {
+            color: #f6ad55;
+        }
+
+        .documentation {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .doc-section {
+            margin-bottom: 3rem;
+        }
+
+        .doc-section h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .doc-section h4 {
+            color: #4a5568;
+            margin: 1.5rem 0 0.5rem 0;
+        }
+
+        .doc-section p {
+            margin-bottom: 1rem;
+            color: #4a5568;
+        }
+
+        .doc-section ul {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section li {
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #fed7d7;
+            color: #c53030;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .status-badge.implemented {
+            background: #c6f6d5;
+            color: #2f855a;
+        }
+
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">Lilota</a>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#platforms">Platforms</a></li>
+                        <li><a href="#documentation">Documentation</a></li>
+                        <li><a href="#github">GitHub</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Lilota</h1>
+            <p>Open source embedded systems firmware for microcontrollers using TCL for IoT home automation</p>
+            <a href="#documentation" class="cta-button">Get Started</a>
+            <a href="https://github.com/COMPAS-Lab/lilota" class="cta-button" target="_blank">View on GitHub</a>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 3rem; color: #333;">Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <h3>TCL-Based Scripting</h3>
+                    <p>Uses TCL files to interface with connected hardware, making embedded programming accessible and readable</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏠</div>
+                    <h3>IoT Home Automation</h3>
+                    <p>Designed specifically for home automation systems with easy-to-use GPIO, PWM, and sensor interfaces</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Web IDE</h3>
+                    <p>Built-in web-based development environment for easy coding and deployment</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3>Rich Hardware Support</h3>
+                    <p>Comprehensive GPIO, PWM, ADC, I2C, and sensor modules for various hardware components</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Real-time Control</h3>
+                    <p>Event-driven programming with callbacks for responsive IoT applications</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>WiFi & MQTT Ready</h3>
+                    <p>Built-in WiFi configuration and MQTT support for connected IoT applications</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="platforms" class="platforms">
+        <div class="container">
+            <h2>Supported Microcontrollers</h2>
+            <div class="platform-grid">
+                <div class="platform-card">
+                    <h3>ESP32</h3>
+                    <p>Full support for ESP32 series with WiFi and Bluetooth capabilities</p>
+                </div>
+                <div class="platform-card">
+                    <h3>ESP8266</h3>
+                    <p>Compatible with ESP8266 for cost-effective WiFi-enabled projects</p>
+                </div>
+                <div class="platform-card">
+                    <h3>Arduino Pico</h3>
+                    <p>Native support for RP2040-based boards with dual-core processing</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="documentation" class="documentation">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 3rem; color: #333;">Quick Start Guide</h2>
+            
+            <div class="doc-section">
+                <h3>Prerequisites</h3>
+                <ul>
+                    <li>Supported Microcontroller: ESP32, ESP8266, Arduino Pico</li>
+                    <li>Computer with Linux, MacOS, or Windows</li>
+                    <li>USB data cable (Some are power delivery only)</li>
+                    <li>Serial programmer (for boards without built-in programmers)</li>
+                </ul>
+            </div>
+
+            <div class="doc-section">
+                <h3>Basic TCL Syntax</h3>
+                
+                <h4>Comments</h4>
+                <div class="code-example">
+                    <pre><span class="comment"># This is a comment
+puts 5; # This is also a comment</span></pre>
+                </div>
+
+                <h4>Variables</h4>
+                <div class="code-example">
+                    <pre><span class="keyword">set</span> led [gpio -mode out 12]
+<span class="keyword">set</span> num 5
+puts $num  <span class="comment"># Prints 5</span></pre>
+                </div>
+
+                <h4>GPIO Control</h4>
+                <div class="code-example">
+                    <pre><span class="comment"># Create LED on pin 12
+set</span> led [gpio -mode out 12]
+$led on   <span class="comment"># Turn LED on
+$led off  # Turn LED off</span>
+
+<span class="comment"># Create button on pin 5
+set</span> button [gpio -mode in 5]
+$button change {
+    <span class="keyword">if</span> { $value } {
+        $led on
+    } <span class="keyword">else</span> {
+        $led off
+    }
+}</pre>
+                </div>
+
+                <h4>PWM Control</h4>
+                <div class="code-example">
+                    <pre><span class="comment"># Create PWM on pin 27
+set</span> buzzer [pwm -channel 0 -resolution 8 -frequency 440 27]
+$buzzer duty 0.5  <span class="comment"># Set 50% duty cycle</span></pre>
+                </div>
+
+                <h4>Loops and Functions</h4>
+                <div class="code-example">
+                    <pre><span class="comment"># For loop
+for</span> {set i 0} {[expr $i < 5]} {incr i} {
+    puts $i
+}
+
+<span class="comment"># Function definition
+proc</span> blinkLED {times} {
+    <span class="keyword">global</span> led
+    <span class="keyword">for</span> {set i 0} {$i < $times} {incr i} {
+        $led on
+        after 500
+        $led off
+        after 500
+    }
+}</pre>
+                </div>
+            </div>
+
+            <div class="doc-section">
+                <h3>Setup Methods</h3>
+                
+                <h4>Terminal Method </h4>
+                <p>Follow the <a href="https://github.com/COMPAS-Lab/lilota/blob/main/CONTRIBUTING.md" target="_blank">contributing guide</a> for terminal-based setup.</p>
+                
+                <h4>IDE Method </h4>
+                <p>Future web-based IDE for easier setup and development experience. See the <a href="https://github.com/lilota/lilota.github.io/blob/main/README.md#nci-setup--ide-method" target="_blank">README</a> for more details.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <p>&copy; 2024 Lilota. Open source embedded systems firmware.</p>
+                </div>
+                <div class="social-links">
+                    <a href="https://github.com/COMPAS-Lab/lilota" title="GitHub" target="_blank">📚</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
