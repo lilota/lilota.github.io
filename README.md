@@ -212,8 +212,10 @@ Syntax: sleep *time*
 ```
 sleep 5; #sleeps for 5 seconds
 ```
+
 ## if statements:
 
+If a condition is true, then do something if it isn't then do something else
 Syntax: if {condition} {do this} elseif {condition} {do this} else {do this}  
 
 #### Example:
@@ -231,18 +233,31 @@ if {[expr $num > 5]} {
 For the condition provided, loop while also executing something before every next loop  
 Syntax: for {set *variable* *value*} {*condition*} {*executedThing*} {*loopedCode*}  
 
-#### Example:
+### Example:
 ```
 for {set i 0} {[expr $i < 11]} {incr i} { #prints out i from 0 to 10  
 	puts $i  
 }
 ```
+
+## foreach loops:
+For each value in an array, assign the value to the given variable and loop the inside code the by the length of the array
+Syntax: foreach *loopingVariable* *arrayVariable* {*loopedCode*}  
+
+### Example: 
+```
+set $myArray {"a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z"}
+foreach i $myArray {
+	puts $i
+}
+```
+
 ## while loops:
 
 While the condition provided is true, loop  
 Syntax: while {*condition*} {loopedCode}  
 
-#### Example:
+### Example:
 ```
 set j 0  
 while {$j < 10} { #prints out i from 0 to 9 but excludes 6 and 7  
@@ -500,3 +515,4 @@ cycleLED 5
 cycleLED 1 1000  
 cycleLED 2 3000
 ```
+
