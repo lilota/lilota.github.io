@@ -459,10 +459,10 @@ cycleLED 5 500
 ```
 #### Example 3:
 ```
-set led \[gpio \-mode out 12\]  
+set led [gpio -mode out 12]  
 proc cycleLED {} {  
     global led  
-    for {set i 0} {$i \< 3} {incr i} {  
+    for {set i 0} {$i < 3} {incr i} {  
         $led on  
         after 400  
         $led off  
@@ -478,18 +478,18 @@ To set the default value of a proc parameter, use curly braces around the parame
 syntax: {*parameter defaultValue*}  
 While you can put parameters with default values in front of parameters without default values in the proc declaration, there is no point as you will have to declare the value for the parameter with default value.  
 ```
-proc cycleLED {{times 5} time} {# there is no point for this order of declaration}
+proc cycleLED { {times 5} time} {# there is no point for this order of declaration}
 ``` 
 Rather, a more useful way of declaring this would be:  
 ```
-proc cycleLED {time {times 5}} {#This way is much more functional as only need to input a value for time and not for times}
+proc cycleLED {time {times 5} } {#This way is much more functional as only need to input a value for time and not for times}
 ```
 #### Example: 
 ```
 ex: set led [gpio -mode out 12]  
-proc cycleLED {times {time 500}} {  
+proc cycleLED {times {time 500} } {  
     global led  
-    for {set i 0} {$i \< $times} {incr i} {  
+    for {set i 0} {$i < $times} {incr i} {  
         $led on  
         after $time  
         $led off  
