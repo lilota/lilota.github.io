@@ -55,7 +55,21 @@ puts 5; #prints out a 5
 #Ex2:
 puts 5; puts 100; #prints out a 5 then prints out a 100 in the next line
 ```
-Please only use this power for comments to keep things readable
+Please only use this power for comments to keep things readable  
+
+## source:
+
+Runs another TCL script within the current TCL script or to runs a TCL script through the terminal
+
+### Example:
+```
+#Ex1: (Currently running something.tcl)
+puts "something"
+source somethingElse.tcl; #Will now run somethingElse.tcl which will print out "something else"
+
+#Ex2: (Currently in the terminal)
+source something.tcl
+```
 
 ## set: 
 
@@ -180,11 +194,11 @@ Syntax: \[expr *expression*\]
 ```
 ### i2c:
 
-Syntax: \[i2c *sdaPin sclPin frequency*\]  
+Syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\]  
 
 #### Example:
 ```
-[i2c 21 22 100000]
+[i2c -sda 21 -scl 22 -freq 100000]
 ```
 
 ## after:
@@ -516,4 +530,27 @@ cycleLED 1 1000
 cycleLED 2 3000
 ```
 
-# Great please deploy :)
+## i2c:
+
+Aside from the creation/calling of the i2c object, using the syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\], each i2c device needs extra setup.  
+While the extra setup can be done manually, example codes have been provided and are available for use  
+
+### Access Examples through IDE:
+To access i2c example code through the IDE, go to File->Examples->i2c Examples and choose your correct i2c part.  
+
+### Access Examples through Terminal:
+To access i2c example code through the terminal, go to the `/lilroot/examples/i2c_Examples/` directory  
+
+### read:
+Reads and returns the value from the i2c slave address  
+syntax: *i2cObject* read *Address*
+
+#### Example:
+
+
+### scan:
+
+### timeout:
+
+### write:
+
