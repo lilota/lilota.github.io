@@ -25,7 +25,7 @@ A microcontroller flashed with Lilota uses [TCL](https://www.tcl-lang.org/about/
 
 # Setup \- Terminal method
 
-1. Do same as [contributing.md file](https://github.com/COMPAS-Lab/lilota/blob/main/CONTRIBUTING.md)
+1. Follow the [contributing.md file](https://github.com/COMPAS-Lab/lilota/blob/main/CONTRIBUTING.md)
 
 # Useage
 
@@ -45,7 +45,7 @@ puts 5; #prints out a 5
 ```
 ## Semicolon:
 
-Declares the end of a line and allows for another action to be called  
+Declares the end of a line and allows for another action to be called. Can be replaced by a new line  
 
 ### Example:
 ```
@@ -55,29 +55,58 @@ puts 5; #prints out a 5
 #Ex2:
 puts 5; puts 100; #prints out a 5 then prints out a 100 in the next line
 ```
-Please only use this power for comments to keep things readable  
 
 ## source:
 
-Runs another TCL script within the current TCL script or to runs a TCL script through the terminal
+Runs another TCL script within the current TCL environment
 
 ### Example:
 ```
-#Ex1: (Currently running something.tcl)
+#Ex1: (Currently in the terminal)
+source something.tcl
+
+#Ex2: (Currently running something.tcl)
 puts "something"
 source somethingElse.tcl; #Will now run somethingElse.tcl which will print out "something else"
 
-#Ex2: (Currently in the terminal)
-source something.tcl
+#Ex3:
+source motors.tcl; #initalize the functions necessary to run motor pwm
+move $FORWARD 100
+```
+
+## puts:
+
+Prints out values or commands  
+Syntax: puts ?-nonewline? value A/N: the nonewline flag does not work  
+
+### Example
+```
+#Ex1: 
+puts 5
+
+#Ex2:
+puts “hello world”
+
+#Ex3: 
+puts “h”
+puts -nonewline “i”
+
+#Ex4:
+set num 5
+puts "num's value is $num"
+
+#Ex5:
+set num 5  
+puts "num - 4 = [expr $num - 4]"
 ```
 
 ## set: 
 
-assigns values or commands to variables and creates a new variable if a variable under that name does not exist
+creates a variable under the variableName if variableName does not exist and assigns value to it
 
 ### How to use:
 
-Syntax: set variableName *valueOrCommand*  
+Syntax: set variableName *value*  
 
 #### Example:
 ```
@@ -85,7 +114,50 @@ Syntax: set variableName *valueOrCommand*
 set num 5
 
 #Ex2:
-set led [gpio -mode out 12]
+set led [gpio -mode out 12]; #led gets assigned to a refrence of a gpio object with pin 12 and mode "out"
+```
+
+## Dollar sign($):
+
+Accesses the value of a variable  
+
+### Example:
+```
+#Ex1:
+set hi 5  
+puts $hi; \#prints out 5
+
+#Ex2:
+set led [gpio -mode out 12]; #led holds a refrence to a gpio object
+$led on; #calls the refrence to the led gpio object to use its methods
+```
+
+## Square Brackets([]):
+
+Calls the interpreter recursively
+
+### Example:
+```
+#Ex1:
+puts [expr 3 * 2]
+
+#Ex2:
+set led [gpio -mode out 12]; #gpio function is called first and returns a refrence to a gpio object with pin 12 and mode "out"
+```
+
+## expr:
+
+Evaluates and returns given expression
+
+### Example:
+```
+#Ex1:
+set a 3
+set b 2
+set c [expr $a + $b]
+
+#Ex2:
+puts [4 * 3 / (2 * 3)]; #prints 2
 ```
 
 ## incr:
@@ -116,44 +188,11 @@ decr num; #this decrements num by 1
 #Ex2:
 decr num 4; #this decrements num by 4
 ```
-## puts:
 
-Prints out values or commands  
-Syntax: puts ?-nonewline? valueOrCommand A/N: the nonewline flag does not work  
 
-### Example
-```
-#Ex1: 
-puts 5
+# Structures and Objects:
 
-#Ex2:
-puts “hello world”
-
-#Ex3: 
-puts “h”
-puts -nonewline “i”
-
-#Ex4:
-set num 5
-puts $num
-
-#Ex5:
-set num 5  
-puts [expr num > 4]; #Prints out 1 because it is true
-```
-## Dollar sign($):
-
-Accesses the value of the variable  
-
-### Example:
-```
-set hi 5  
-puts $hi; \#prints out 5
-```
-## Object command:
-
-To declare a object command, use square brackets. Ex: \[gpio \-mode out 12\]  
-Spaces are the separators between parts of a command
+Structures take on the same syntax as functions that return a refrence back to create objects
 
 ### gpio:
 
@@ -176,22 +215,6 @@ Syntax: \[pwm \-channel *channelNo* \-resolution *resolution* \-frequency *frequ
 Syntax: \[adc \-bitwidth *bitwidth* \-attenuation *addenuation* *pinNo*\]  
 ex : \[adc \-bitwidth 12 \-attenuation 0 6\]
 
-### expr:
-
-expr allows for math expressions like comparisons and operations to be done. If a comparison is true, returns 1, if a condition is false, returns 0  
-Syntax: \[expr *expression*\]  
-
-#### Example:
-```
-#Comparison example that will return 1 if true and 0 if false
-[expr $var > 5]
-
-#Comparison example with strings that will return 1 if the string and the value of the variable is equal
-[expr $str eq "hi"]
-
-#Operation example that will return the value of var multiplied by 12
-[expr $var *12]
-```
 ### i2c:
 
 Syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\]  
