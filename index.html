@@ -336,14 +336,14 @@
                     <p>Uses TCL files to interface with connected hardware, making embedded programming accessible and readable</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🏠</div>
-                    <h3>IoT Home Automation</h3>
-                    <p>Designed specifically for home automation systems with easy-to-use GPIO, PWM, and sensor interfaces</p>
+                    <div class="feature-icon">🪨</div>
+                    <h3>Set It and Forget It</h3>
+                    <p>Rock solid firmware that is stable through use</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📱</div>
-                    <h3>Web IDE</h3>
-                    <p>Built-in web-based development environment for easy coding and deployment</p>
+                    <h3>Simple Yet Powerful IDE</h3>
+                    <p>Built-in web-based development environment for quick, easy setup, coding, deployment, and updates</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔌</div>
@@ -396,6 +396,21 @@
                     <li>USB data cable (Some are power delivery only)</li>
                     <li>Serial programmer (for boards without built-in programmers)</li>
                 </ul>
+            </div>
+
+            <div class="doc-section">
+                <h3>Setup Methods</h3>
+                
+                <h4>Terminal Method </h4>
+                <p>Follow the <a href="https://github.com/COMPAS-Lab/lilota/blob/main/CONTRIBUTING.md" target="_blank">contributing guide</a> for terminal-based setup.</p>
+                
+                <h4>IDE Method </h4>
+                    <ol>
+                        <li>Install the lilota IDE</li>
+                        <li>Use IDE to flash built files onto esp/pico</li>
+                        <li>After flashing, a GUI menu will pop up to configure WiFi, MQTT, etc which can be brought up later in the device settings</li>
+                        <li>Create and edit files which can then be flashed onto the board</li>
+                    </ol>
             </div>
 
             <div class="doc-section">
@@ -458,15 +473,8 @@ proc</span> blinkLED {times} {
 }</pre>
                 </div>
             </div>
-
             <div class="doc-section">
-                <h3>Setup Methods</h3>
-                
-                <h4>Terminal Method </h4>
-                <p>Follow the <a href="https://github.com/COMPAS-Lab/lilota/blob/main/CONTRIBUTING.md" target="_blank">contributing guide</a> for terminal-based setup.</p>
-                
-                <h4>IDE Method </h4>
-                <p>Future web-based IDE for easier setup and development experience. See the <a href="https://github.com/lilota/lilota.github.io/blob/main/README.md#nci-setup--ide-method" target="_blank">README</a> for more details.</p>
+                <h4>See the <a href="https://github.com/lilota/lilota.github.io/blob/main/README.md#useage" target="_blank">README</a> for more details.</h4>
             </div>
         </div>
     </section>
