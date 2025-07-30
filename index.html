@@ -167,16 +167,42 @@
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+            overflow: hidden;
+            max-height: 220px;
+            position: relative;
         }
-
-        .platform-card:hover {
-            transform: translateY(-5px);
+        .platform-card:hover, .platform-card:focus-within {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+            max-height: 500px;
+            z-index: 2;
         }
-
-        .platform-card h3 {
-            color: #667eea;
+        .platform-image {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
             margin-bottom: 1rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .platform-details {
+            opacity: 0;
+            max-height: 0;
+            transition: opacity 0.4s, max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .platform-card:hover .platform-details, .platform-card:focus-within .platform-details {
+            opacity: 1;
+            max-height: 300px;
+            margin-top: 1rem;
+        }
+        .platform-card .platform-summary {
+            transition: opacity 0.3s;
+        }
+        .platform-card:hover .platform-summary, .platform-card:focus-within .platform-summary {
+            opacity: 0.2;
         }
 
         .code-example {
@@ -368,17 +394,29 @@
         <div class="container">
             <h2>Supported Microcontrollers</h2>
             <div class="platform-grid">
-                <div class="platform-card">
+                <div class="platform-card" tabindex="0">
+                    <img class="platform-image" src="imgsrc/esp32chipimage.webp" alt="ESP32 chip" />
                     <h3>ESP32</h3>
-                    <p>Full support for ESP32 series with WiFi and Bluetooth capabilities</p>
+                    <p class="platform-summary">Full support for ESP32 series with WiFi and Bluetooth capabilities</p>
+                    <div class="platform-details">
+                        <p>The ESP32 is a powerful, feature-rich microcontroller with integrated WiFi and Bluetooth. Ideal for IoT, automation, and sensor projects. Supports dual-core processing, low-power modes, and a wide range of peripherals.</p>
+                    </div>
                 </div>
-                <div class="platform-card">
+                <div class="platform-card" tabindex="0">
+                    <img class="platform-image" src="imgsrc/esp8266chipimage.jpg" alt="ESP8266 chip" />
                     <h3>ESP8266</h3>
-                    <p>Compatible with ESP8266 for cost-effective WiFi-enabled projects</p>
+                    <p class="platform-summary">Compatible with ESP8266 for cost-effective WiFi-enabled projects</p>
+                    <div class="platform-details">
+                        <p>The ESP8266 is a low-cost WiFi microchip with full TCP/IP stack and microcontroller capability. Perfect for simple IoT devices, smart sensors, and home automation on a budget.</p>
+                    </div>
                 </div>
-                <div class="platform-card">
+                <div class="platform-card" tabindex="0">
+                    <img class="platform-image" src="imgsrc/rp2040chipimage.jpg" alt="RP2040 chip" />
                     <h3>Arduino Pico</h3>
-                    <p>Native support for RP2040-based boards with dual-core processing</p>
+                    <p class="platform-summary">Native support for RP2040-based boards with dual-core processing</p>
+                    <div class="platform-details">
+                        <p>The Arduino Pico (RP2040) features a dual-core ARM Cortex-M0+ processor, flexible I/O, and robust performance for advanced embedded applications. Great for education, prototyping, and real-time control.</p>
+                    </div>
                 </div>
             </div>
         </div>
