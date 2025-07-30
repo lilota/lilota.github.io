@@ -225,11 +225,15 @@
         }
 
         .code-example .keyword {
-            color: #63b3ed;
+            color: #5e87c4;
         }
 
         .code-example .string {
             color: #f6ad55;
+        }
+
+        .code-example .variable {
+            color: #9fccff;
         }
 
         .documentation {
@@ -336,6 +340,7 @@
                         <li><a href="#features">Features</a></li>
                         <li><a href="#platforms">Platforms</a></li>
                         <li><a href="#documentation">Documentation</a></li>
+                        <li><a href="ide.html">IDE</a></li>
                         <li><a href="https://github.com/COMPAS-Lab/lilota" target="_blank">GitHub</a></li>
                     </ul>
                 </nav>
@@ -348,6 +353,7 @@
             <h1>Lilota</h1>
             <p>Open source embedded systems firmware for microcontrollers using TCL for IoT home automation</p>
             <a href="#documentation" class="cta-button">Get Started</a>
+            <a href="ide.html" class="cta-button">Try IDE</a>
             <a href="https://github.com/COMPAS-Lab/lilota" class="cta-button" target="_blank">View on GitHub</a>
         </div>
     </section>
@@ -412,10 +418,10 @@
                 </div>
                 <div class="platform-card" tabindex="0">
                     <img class="platform-image" src="imgsrc/rp2040chipimage.jpg" alt="RP2040 chip" />
-                    <h3>Arduino Pico</h3>
+                    <h3>Raspberry Pi Pico</h3>
                     <p class="platform-summary">Native support for RP2040-based boards with dual-core processing</p>
                     <div class="platform-details">
-                        <p>The Arduino Pico (RP2040) features a dual-core ARM Cortex-M0+ processor, flexible I/O, and robust performance for advanced embedded applications. Great for education, prototyping, and real-time control.</p>
+                        <p>The Raspberry Pi Pico (RP2040) features a dual-core ARM Cortex-M0+ processor, flexible I/O, and robust performance for advanced embedded applications. Great for education, prototyping, and real-time control.</p>
                     </div>
                 </div>
             </div>
@@ -456,31 +462,31 @@
                 
                 <h4>Comments</h4>
                 <div class="code-example">
-                    <pre><span class="comment"># This is a comment
-puts 5; # This is also a comment</span></pre>
+                    <pre><span class="comment"># This is a comment</span>
+<span class="keyword">puts</span> 5; <span class="comment"># This is also a comment</span></pre>
                 </div>
 
                 <h4>Variables</h4>
                 <div class="code-example">
                     <pre><span class="keyword">set</span> led [gpio -mode out 12]
 <span class="keyword">set</span> num 5
-puts $num  <span class="comment"># Prints 5</span></pre>
+<span class="keyword">puts</span> <span class="variable">$num</span>;  <span class="comment"># Prints 5</span></pre>
                 </div>
 
                 <h4>GPIO Control</h4>
                 <div class="code-example">
                     <pre><span class="comment"># Create LED on pin 12
-set</span> led [gpio -mode out 12]
-$led on   <span class="comment"># Turn LED on
-$led off  # Turn LED off</span>
+<span class="keyword">set</span></span> led [gpio -mode out 12]
+<span class="variable">$led</span> on;   <span class="comment"># Turn LED on</span>
+<span class="variable">$led</span> off;  <span class="comment"># Turn LED off</span>
 
 <span class="comment"># Create button on pin 5
-set</span> button [gpio -mode in 5]
-$button change {
-    <span class="keyword">if</span> { $value } {
-        $led on
+<span class="keyword">set</span></span> button [gpio -mode in 5]
+<span class="variable">$button</span> change {
+    <span class="keyword">if</span> { <span class="variable">$value</span> } {
+        <span class="variable">$led</span> on
     } <span class="keyword">else</span> {
-        $led off
+        <span class="variable">$led</span> off
     }
 }</pre>
                 </div>
@@ -488,26 +494,26 @@ $button change {
                 <h4>PWM Control</h4>
                 <div class="code-example">
                     <pre><span class="comment"># Create PWM on pin 27
-set</span> buzzer [pwm -channel 0 -resolution 8 -frequency 440 27]
-$buzzer duty 0.5  <span class="comment"># Set 50% duty cycle</span></pre>
+<span class="keyword">set</span></span> buzzer [pwm -channel 0 -resolution 8 -frequency 440 27]
+<span class="variable">$buzzer</span> duty 0.5;  <span class="comment"># Set 50% duty cycle</span></pre>
                 </div>
 
                 <h4>Loops and Functions</h4>
                 <div class="code-example">
-                    <pre><span class="comment"># For loop
-for</span> {set i 0} {[expr $i < 5]} {incr i} {
-    puts $i
+                    <pre><span class="comment"># For loop</span>
+<span class="keyword">for</span> {<span class="keyword">set</span> i 0} {<span class="variable">$i</span> < 5} {<span class="keyword">incr</span> i} {
+    <span class="keyword">puts</span> <span class="variable">$i</span>
 }
 
-<span class="comment"># Function definition
-proc</span> blinkLED {times} {
+<span class="comment"># Function definition</span>
+<span class="keyword">proc</span> blinkLED {times} {
     <span class="keyword">global</span> led
-    <span class="keyword">for</span> {set i 0} {$i < $times} {incr i} {
-        $led on
-        after 500
-        $led off
-        after 500
-    }
+    <span class="keyword">for</span> {<span class="keyword">set</span> i 0} {<span class="variable">$i</span> < <span class="variable">$times</span>} {<span class="keyword">incr</span> i} {
+    <span class="variable">$led</span> on
+    after 500
+    <span class="variable">$led</span> off
+    after 500
+}
 }</pre>
                 </div>
             </div>
