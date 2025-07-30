@@ -206,8 +206,8 @@
         }
 
         .code-example {
-            background: #2d3748;
-            color: #e2e8f0;
+            background: #1e1e1e;
+            color: #d4d4d4;
             padding: 2rem;
             border-radius: 10px;
             margin: 2rem 0;
@@ -221,19 +221,19 @@
         }
 
         .code-example .comment {
-            color: #68d391;
+            color: #6a9955;
         }
 
         .code-example .keyword {
-            color: #5e87c4;
+            color: #569cd6;
         }
 
         .code-example .string {
-            color: #f6ad55;
+            color: #ce9178;
         }
 
         .code-example .variable {
-            color: #9fccff;
+            color: #9cdcfe;
         }
 
         .documentation {
@@ -509,11 +509,11 @@
 <span class="keyword">proc</span> blinkLED {times} {
     <span class="keyword">global</span> led
     <span class="keyword">for</span> {<span class="keyword">set</span> i 0} {<span class="variable">$i</span> < <span class="variable">$times</span>} {<span class="keyword">incr</span> i} {
-    <span class="variable">$led</span> on
-    after 500
-    <span class="variable">$led</span> off
-    after 500
-}
+        <span class="variable">$led</span> on
+        <span class="keyword">after</span> 500
+        <span class="variable">$led</span> off
+        <span class="keyword">after</span> 500
+    }
 }</pre>
                 </div>
             </div>
