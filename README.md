@@ -117,6 +117,16 @@ set num 5
 set led [gpio -mode out 12]; #led gets assigned to a refrence of a gpio object with pin 12 and mode "out"
 ```
 
+## global: 
+
+Makes a variable useable outside of the current space or brings in a global variable into the current space like a loop or a different TCL script  
+Syntax: global *varible*  
+
+### Example:
+```
+global var
+```
+
 ## Dollar sign($):
 
 Accesses the value of a variable  
@@ -189,7 +199,6 @@ decr num; #this decrements num by 1
 decr num 4; #this decrements num by 4
 ```
 
-
 # Structures and Objects:
 
 Structures take on the same syntax as functions that return a refrence back to create objects
@@ -217,7 +226,7 @@ ex : \[adc \-bitwidth 12 \-attenuation 0 6\]
 
 ### i2c:
 
-Syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\]  
+(NCI) Syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\]  
 
 #### Example:
 ```
@@ -558,10 +567,10 @@ cycleLED 2 3000
 Aside from the creation/calling of the i2c object, using the syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\], each i2c device needs extra setup.  
 While the extra setup can be done manually, example codes have been provided and are available for use  
 
-### Access Examples through IDE:
-To access i2c example code through the IDE, go to File->Examples->i2c Examples and choose your correct i2c part.  
+### (NCI) Access Examples through IDE:
+To access i2c example code through the IDE, go to Examples->i2c Examples and choose your correct i2c part.  
 
-### Access Examples through Terminal:
+### (NCI) Access Examples through Terminal:
 To access i2c example code through the terminal, go to the `/lilroot/examples/i2c_Examples/` directory  
 
 ### read:
@@ -583,12 +592,191 @@ set readVal [$i2cDriver read $_chipAddress 1]
 
 ## adc:
 
+## wifi:  
+
+By default, the device with Lilota creates an access point that you can connect to for over the air.  
+However, the device can be connected to a local wifi allowing for over the air access on the local wifi.  
+When the device is connected, you can connect to the device using the IP address given  
+
+### connect:  
+
+connect to wireless network  
+Syntax: wifi connect  
+
+### disconnect: 
+
+disconnect from a wireless network
+Syntax: wifi disconnect
+
+### init:
+
+Configures wifi with parameters
+Syntax: wifi init -mode *"sta|ap"* -channel *channel* -max_connections *max* -auth_mode *"wpa2_psk|wpa2_enterprise"* -identity *WPA2_Enterprise_Identity* -Username *WPA2_Enterprise_Username* *ssid* *password* {event {script} event2 {script2} ...}
+
+#### defaults:
+mode: sta  
+channel: 1  
+max: 4  
+auth_mode: wpa2_psk  
+
+#### Examples:
+```
+#Ex1: for sta mode
+wifi init -mode sta $ssid $pass {
+	sta_start {
+	    log "Starting connection"
+	    wifi connect
+	}
+	sta_connected {
+	    log "Connected to wifi access point"
+	}
+	sta_disconnected {
+	    log "Disconnected from wifi access point"
+	    wifi connect
+	}
+	ip_ip4 {
+	    log "Wifi IPv4 address: $ip"
+	}
+	ip_ip6 {
+	    log "Wifi IPv6 address: $ipv6"
+	}
+	ip_lost {
+	    log "Lost IP address from wifi access point"
+	}
+}
+#Ex 2 for AP mode
+wifi init -mode ap $HOSTNAME $pass {
+        ap_start { }
+        ap_staconnected {
+            log "Client connected to AP with MAC address $mac and AID $aid"
+        }
+        ap_stadisconnected {
+            log "Client disconnected from AP with MAC address $mac and AID $aid"
+        }
+        ip_staipassigned {
+            log "Client assigned IP address $ip with MAC address $mac"
+        }
+    }
+
+```
+
+### scan
+
+scans for wifi networks in range and returns the availble ones with their information
+Syntax: wifi scan
+
+### (NCI) status
+returns the status of the wifi connection
+Syntax: wifi status
+
 ## mqtt:
 
 In order to monitor and send commands to the Lilota Device, MQTT can be used.  
 You should be prompted to set up MQTT after Lilota was first flashed onto your microcontroller.  
-If you didn't set it up then, go to Config->Wireless->MQTT and you will be prompted with the window to set up MQTT.  
+If you didn't set it up then, go to Settings->Wireless->MQTT and you will be prompted with the window to set up MQTT.  
 
-![MQTT UI Image](imgsrc/MQTT_UI_Mockup.png "MQTT Setup Window")
+<img alt="MQTT UI Image" src="imgsrc/MQTT_UI_Mockup.png" width="300">
 
-The MQTT Object Name is the name of the object variable that you will call the MQTT object with.
+The MQTT Object Name is the name of the object variable that you will call the MQTT object with.  
+
+### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+$mymqtt status; #This will provide you with the status of the connection
+```
+
+### connect:  
+
+Connects to the mqtt broker using the username and password in the MQTT object used  
+Syntax: *mqttObject* connect
+
+#### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+$mymqtt connect
+```
+
+### disconnect:  
+
+Disconnects from the mqtt broker in the MQTT object used  
+Syntax: *mqttObject* disconnect  
+
+#### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+$mymqtt disconnect
+```
+
+### subscribe:
+
+Subscribes to given MQTT topic with the specified quality of service from 0 to 2. This will allow for the device to get commands from the MQTT broker.  
+The topic path is stored in the topicName variable and the commands from the MQTT are stored in the valueName variable.  
+Syntax: *mqttObject* subscribe -qos *quality* *topicPath* {*topicName* *valueName*} {script}
+
+#### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+$mymqtt subscribe -qos 0 mferdman/feeds/lilota-led {topicVar valueVar}
+    global led
+    if { $valueVar eq "ON"} {
+        $led on
+        log "LED turned ON"
+    } else {
+        $led off
+        log "LED turned OFF"
+    }
+}
+```
+
+### (NCI) subscribedHandles:
+
+Returns the currently subscribed topics of the MQTT object and the handles associated with them as a dictionary/map/associated array  
+Syntax: *mqttObject* subscribedHandles  
+
+#### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+#Ex1: 
+set currentHandles [$mymqtt subscribedHandles]; #creates a new map called currentHandles that can accessed later
+
+#Ex2:
+$mymqtt subscribedHandles; #prints out the current subscribed topics and the handles associated with them. 
+```
+
+### unsubscribe:
+
+Unsubscribes from the given mqtt handle  
+Syntax: *mqttObject* unsubscribe *handle*
+#### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+$mymqtt unsubscribe 1
+```
+
+### publish:
+
+Sends a message to the given topic of the mqtt object with the option for throw and retain flags  
+throw: throws an error if the message didn't publish  
+retain: stores the message inside of the topic which can then be sent out when a device subscribes to the topic  
+Syntax: *mqttObject* publish -qos *quality* *-throw* *-retain* *topicPath* *message*  
+
+#### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+#Ex1: with no flags
+$mymqtt publish -qos 0 mferdman/feeds/lilota "Testing"
+
+#Ex2: with only throw flag
+$mymqtt publish -qos 0 -throw mferdman/feeds/lilota "Testing"
+
+#Ex3: with both throw and retain flags
+set status [$mymqtt status]
+$mymqtt publish -qos 0 -throw -retain mferdman/feeds/lilota $status
+```
+
+### status:
+
+Returns the status of the connection to the MQTT broker and (NCI) the address of the broker
+Syntax: *mqttObject* status
+
+#### Example: If you put "mymqtt" as your MQTT Object Name  
+```
+#Ex1:
+$mymqtt status
+
+$Ex2:
+set status [$mymqtt status]
+```
