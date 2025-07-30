@@ -566,10 +566,12 @@ To access i2c example code through the terminal, go to the `/lilroot/examples/i2
 
 ### read:
 Reads and returns the value from the i2c slave address  
-syntax: *i2cObject* read *Address*
+syntax: *i2cObject* read *Address* *bytesToRead*
 
 #### Example:
-
+```
+set readVal [$i2cDriver read $_chipAddress 1]
+```
 
 ### scan:
 
@@ -577,3 +579,16 @@ syntax: *i2cObject* read *Address*
 
 ### write:
 
+## spi:
+
+## adc:
+
+## mqtt:
+
+In order to monitor and send commands to the Lilota Device, MQTT can be used.  
+You should be prompted to set up MQTT after Lilota was first flashed onto your microcontroller.  
+If you didn't set it up then, go to Config->Wireless->MQTT and you will be prompted with the window to set up MQTT.  
+
+![MQTT UI Image](imgsrc/MQTT_UI_Mockup.png "MQTT Setup Window")
+
+The MQTT Object Name is the name of the object variable that you will call the MQTT object with.
