@@ -31,11 +31,13 @@ A microcontroller flashed with Lilota uses [TCL](https://www.tcl-lang.org/about/
 
 To start, create a new TCL file 
 
-## Comments:
+## TCL Fundamentals
+
+### Comments:
 
 To declare a line or a part of a line as a comment, put a “\#” in front of it  
 
-### Example:
+#### Example:
 ```
 #Ex1: 
 puts 5; #prints out a 5
@@ -43,11 +45,11 @@ puts 5; #prints out a 5
 #Ex2:
 #The line above prints out a 5
 ```
-## Semicolon:
+### Semicolon:
 
 Declares the end of a line and allows for another action to be called. Can be replaced by a new line  
 
-### Example:
+#### Example:
 ```
 #Ex1:
 puts 5; #prints out a 5
@@ -56,11 +58,11 @@ puts 5; #prints out a 5
 puts 5; puts 100; #prints out a 5 then prints out a 100 in the next line
 ```
 
-## source:
+### source:
 
 Runs another TCL script within the current TCL environment
 
-### Example:
+#### Example:
 ```
 #Ex1: (Currently in the terminal)
 source something.tcl
@@ -74,12 +76,12 @@ source motors.tcl; #initalize the functions necessary to run motor pwm
 move $FORWARD 100
 ```
 
-## puts:
+### puts:
 
 Prints out values or commands  
 Syntax: puts ?-nonewline? value A/N: the nonewline flag does not work  
 
-### Example
+#### Example
 ```
 #Ex1: 
 puts 5
@@ -100,12 +102,9 @@ set num 5
 puts "num - 4 = [expr $num - 4]"
 ```
 
-## set: 
+### set: 
 
 creates a variable under the variableName if variableName does not exist and assigns value to it
-
-### How to use:
-
 Syntax: set variableName *value*  
 
 #### Example:
@@ -117,21 +116,21 @@ set num 5
 set led [gpio -mode out 12]; #led gets assigned to a refrence of a gpio object with pin 12 and mode "out"
 ```
 
-## global: 
+### global: 
 
 Makes a variable useable outside of the current space or brings in a global variable into the current space like a loop or a different TCL script  
 Syntax: global *varible*  
 
-### Example:
+#### Example:
 ```
 global var
 ```
 
-## Dollar sign($):
+### Dollar sign($):
 
 Accesses the value of a variable  
 
-### Example:
+#### Example:
 ```
 #Ex1:
 set hi 5  
@@ -142,11 +141,11 @@ set led [gpio -mode out 12]; #led holds a refrence to a gpio object
 $led on; #calls the refrence to the led gpio object to use its methods
 ```
 
-## Square Brackets([]):
+### Square Brackets([]):
 
 Calls the interpreter recursively
 
-### Example:
+#### Example:
 ```
 #Ex1:
 puts [expr 3 * 2]
@@ -155,11 +154,11 @@ puts [expr 3 * 2]
 set led [gpio -mode out 12]; #gpio function is called first and returns a refrence to a gpio object with pin 12 and mode "out"
 ```
 
-## expr:
+### expr:
 
 Evaluates and returns given expression
 
-### Example:
+#### Example:
 ```
 #Ex1:
 set a 3
@@ -170,13 +169,31 @@ set c [expr $a + $b]
 puts [4 * 3 / (2 * 3)]; #prints 2
 ```
 
-## incr:
+### proc:
+
+Creates a function that you can call in the future.  
+Define syntax: proc *functionName* {parameters} {function}  
+Call syntax: *functionName* *parameters*  
+Default parameters: replace *parameter* with {*parameter* *defaultValue*}
+
+#### Example:
+```
+proc print {val {times 1}} {  
+    for {set i 0} {$i < $times} {incr i} {  
+        puts $val
+    }  
+}  
+print hello
+print "this will print 3 times" 3
+```
+
+### incr:
 
 Increments a variable by a selected value  
 Syntax: incr variableName *amount*  
-- If amount is not provided, it defaults to 1
+- *amount* defaults to 1
 
-### Example:
+#### Example:
 ```
 #Ex1:
 incr num; #this increments num by 1
@@ -184,13 +201,13 @@ incr num; #this increments num by 1
 #Ex2:
 incr num 3; #this increments num by 3
 ```
-## decr:
+### decr:
 
 Decrements a variable by a selected value  
 Syntax: decr variableName *amount* 
-- If amount is not provided, it defaults to 1
+- *amount* defaults to 1
 
-### Example:
+#### Example:
 ```
 #Ex1:
 decr num; #this decrements num by 1
@@ -199,46 +216,69 @@ decr num; #this decrements num by 1
 decr num 4; #this decrements num by 4
 ```
 
-# Structures and Objects:
+## Logic Statements
 
-Structures take on the same syntax as functions that return a refrence back to create objects
+### if statements:
 
-### gpio:
-
-Syntax: \[gpio \-mode *In/Out* *pinNo*\]  
-
-#### Example:
-```
-[gpio -mode in 12]
-```
-### pwm:
-
-Syntax: \[pwm \-channel *channelNo* \-resolution *resolution* \-frequency *frequency* *pinNo*\]  
+If a condition is true, then do something if it isn't then do something else
+Syntax: if {condition} {do this} elseif {condition} {do this} else {do this}  
 
 #### Example:
 ```
-[pwm -channel 0 -resolution 18 -frequency 233 27]
+if {[expr $num > 5]} {  
+    puts big  
+} elseif {[expr $num < 5 && $num >3]} {  
+    puts med  
+} else {  
+    puts small  
+}
 ```
-### adc:
+### for loops:
 
-Syntax: \[adc \-bitwidth *bitwidth* \-attenuation *addenuation* *pinNo*\]  
-ex : \[adc \-bitwidth 12 \-attenuation 0 6\]
-
-### i2c:
-
-(NCI) Syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\]  
+For the condition provided, loop while also executing something before every next loop  
+Syntax: for {set *variable* *value*} {*condition*} {*executedThing*} {*loopedCode*}  
 
 #### Example:
 ```
-[i2c -sda 21 -scl 22 -freq 100000]
+for {set i 0} {[expr $i < 11]} {incr i} { #prints out i from 0 to 10  
+    puts $i  
+}
 ```
 
-## after:
+### foreach loops:
+For each value in an array, assign the value to the given variable and loop the inside code the by the length of the array
+Syntax: foreach *loopingVariable* *arrayVariable* {*loopedCode*}  
+
+#### Example: 
+```
+set $myArray {"a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z"}
+foreach i $myArray {
+    puts $i
+}
+```
+
+### while loops:
+
+While the condition provided is true, loop  
+Syntax: while {*condition*} {loopedCode}  
+
+#### Example:
+```
+set j 0  
+while {$j < 10} { #prints out i from 0 to 9 but excludes 6 and 7  
+    puts $j  
+    if {$j == 5} { incr j 2 }  
+    incr j
+}
+```
+
+## Timers and Callbacks
+
+### after:
 
 After a certain amount of time(ms), run what is inside of the after function call.  
 If there is nothing inside of the function call, it pauses the thread that is currently running the code  
 Syntax: after *time* {script}  
-Syntax: after *time*  
 
 #### Example:
 ```
@@ -248,100 +288,89 @@ after 500 {puts “hi”}
 Ex2:
 after 1000  
 puts “bye”
+
+Ex3:
+after 100 {puts "this will print last"}
+puts "this will print first"
 ```
-## sleep:
+
+### sleep:
 
 Pauses the thread for a certain amount of time(s) 
-Don’t use, use after  
 Syntax: sleep *time*  
-#### Example:
-```
-sleep 5; #sleeps for 5 seconds
-```
-
-## if statements:
-
-If a condition is true, then do something if it isn't then do something else
-Syntax: if {condition} {do this} elseif {condition} {do this} else {do this}  
 
 #### Example:
 ```
-if {[expr $num > 5]} {  
-  puts big  
-} elseif {[expr $num < 5 && $num >3]} {  
-	puts med  
-} else {  
-	puts small  
+sleep .5; #sleeps for half a second
+```
+
+## Structures and Objects:
+
+Structures take on the same syntax as functions that return a refrence back to create objects
+
+### Theoretical functionality (Behind the scenes)
+
+We define structures as a function that returns a refrence to other functionality
+```
+proc printer {} {
+    set ref [rand]
+    proc $ref {type val} {
+        if ($type == "print"} {
+            puts $val
+        } elseif {$type == "nolinePrint"} {
+	    puts -nonewline $val
+        } else {
+            puts "error"
+        }
+    }
+    return $ref
 }
 ```
-## for loops:
-
-For the condition provided, loop while also executing something before every next loop  
-Syntax: for {set *variable* *value*} {*condition*} {*executedThing*} {*loopedCode*}  
-
-### Example:
+With the *printer* structure defined, we can create an object by setting the refrence to a variable
 ```
-for {set i 0} {[expr $i < 11]} {incr i} { #prints out i from 0 to 10  
-	puts $i  
-}
+set object [printer]
+$object nolinePrint "The number I will print is "
+$object print 5
 ```
 
-## foreach loops:
-For each value in an array, assign the value to the given variable and loop the inside code the by the length of the array
-Syntax: foreach *loopingVariable* *arrayVariable* {*loopedCode*}  
+## Built in Hardware Structures:
 
-### Example: 
-```
-set $myArray {"a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z"}
-foreach i $myArray {
-	puts $i
-}
-```
+### gpio:
 
-## while loops:
+Initialization:
+set *gpioObject* [gpio -mode In/Out -pull Up/Down/None pinNo]
 
-While the condition provided is true, loop  
-Syntax: while {*condition*} {loopedCode}  
+#### GPIO Command List:
+- set
+- change
+- get
+- on
+- off
+- (NCI) toggle
+- mode
+- pulse
+- onpulse
 
-### Example:
-```
-set j 0  
-while {$j < 10} { #prints out i from 0 to 9 but excludes 6 and 7  
-    puts $j  
-    if {$j == 5} { incr j 2 }  
-    incr j  
-}
-```
-## gpio:
-
-set `[gpio -mode in/Out pinNo]` to a variable to create an object  
-Commands for gpio:
-
-### set:
+#### set:
 
 Set the level of a GPIO pin  
 Syntax: *gpioObject* set *intValue*  
-
-#### Example:
 ```
-Ex1: 
 set led [gpio -mode out 12]  
-$led set 1; \#This will turn on the LED  
-$led set 0; \#This will turn off the LED
-
-Ex2:
-[gpio -mode out 12] set 1; #this will set whatever is at gpio pin 1 to level 1
+$led set 1; #This will turn on the LED  
+$led set 0; #This will turn off the LED
+[gpio -mode out 12] set 1; #This will turn on the LED
 ```
-### change:
+
+#### change:
 
 When there is a change in the state of the GPIO pin, run the callback  
 Syntax: *gpioObject* change {callback}  
-
-#### Example:
 ```
+# When button is pressed, led on. When button is released, led off  
 set button [gpio -mode in 5]  
 set led [gpio -mode out 12]  
-$button change { #when button is pressed, led on. When button is released, led off  
+$button change { 
   global led  
   if { $value } {  # or [$this get]  
     $led on  
@@ -350,243 +379,160 @@ $button change { #when button is pressed, led on. When button is released, led o
   }  
 }
 ```
-### get:
+
+#### get:
 
 Returns the state of the GPIO pin  
-Syntax: \[*gpioObject* get\]  
+Syntax: *gpioObject* get  
+```
+set button [gpio -mode in 5]  
+if {$button get} {
+    puts "Button is not pressed"
+} else {
+    puts "Button is pressed"
+}
+```
 
-#### Example:
-```
-set led [gpio -mode out 12]
-$led set 1  
-puts [$led get]; #prints out 1 which is the state of the led
-```
-### on:
+#### on:
 
 Sets the gpio pin to state 1  
 Syntax: *gpioObject* on  
-
-#### Example:
 ```
 set led [gpio -mode out 12]  
-$led on; #The led turns on
+$led on
 ```
-### off:
+
+#### off:
 
 Sets the gpio pin to state 0  
 Syntax: *gpioObject* off  
-
-#### Example:
 ```
 set led [gpio -mode out 12]  
-$led on; #The led turns on  
-$led off; #The led turns off
+$led off
 ```
-### (NCI) toggle:
 
-if gpio pin state is 0, then set to 1, if state 1, set to 0  
+#### (NCI) toggle:
+
+Flips state of the gpio pin
 Syntax: *gpioObject* toggle  
-
-#### Example:
 ```
 set led [gpio -mode out 12]
 $led toggle; #The led turns on  
 $led toggle; #The led turns off
 ```
-### mode:
+
+#### mode:
 
 Sets the mode of the gpio pin to be either input or output  
-Syntax: *gpioObject* mode *in/Out*  
+Syntax: *gpioObject* mode *In/Out*  
+```
+set led [gpio -mode in 12]
+if {$led get} {  
+    $led mode out
+    $led set 0
+}
+```
 
-#### Example:
-```
-set led [gpio 12]  
-$led mode out
-```
-Alternatively you can set the mode during the gpio object creation:  
-syntax: \[gpio \-mode in/Out pinNo\]  
-
-#### Example:
-```
-set button [gpio -mode in 5]
-```
-### pulse:
+#### pulse:
 
 Sets the state of a gpio pin to high for a specified amount of time(ms)  
 Syntax: *gpioObject* pulse *time*  
-
-#### Example:
 ```
 set led [gpio -mode out 12]  
-$led pulse 1000; #turns on the led for 1 second then turns it off
+$led pulse 1000
 ```
-### onpulse:
 
-when there is a pulse in the state of the gpio pin, run the callback function  
-This was originally for the ultrasonic range finder  
+#### onpulse:
+
+When there is a pulse in the state of the gpio pin, run the callback function  
 syntax: *gpioObject* onpulse {callbackFunction}  
-#### Example:
 ```
-$button onpulse { #When doing this, makes sure to use a debounced button  
-  global led  
-  if {[$led get]} {  
-    $led off
-    puts "LED OFF"  
-  } else {  
-    $led on
-    puts "LED ON"  
-  }  
+# Basic Ultrasonic Code
+set trig [gpio -mode out 5]
+set echo [gpio -mode in 16]
+
+$echo onpulse {
+    set distance [expr {$duration / 58}]
+    puts "Distance: $distance cm"
 }
+
+$trig pulse 10
 ```
-## pwm:
 
-set \[pwm \-channel *channelNo* \-resolution *resolution* \-frequency *frequency* *pinNo*\] to a variable to create an object  
-commands for pwm:
 
-### duty:
+### pwm:
+
+Initialization: 
+set *pwmObject* \[pwm \-channel *channelNo* \-resolution *resolution* \-frequency *frequency* *pinNo*\]  
+
+#### PWM Command List:
+- duty
+- freq
+
+#### duty:
 
 Sets the duty cycle of the pwm signal using a double from 0 to 1  
 Syntax: *pwmObject* duty *doubleValue*  
-#### Example:
 ```
 set buzzer [pwm -channel 3 -resolution 17 -frequency 587 27]  
 $buzzer duty 0.5
 ```
 
-### freq:
+#### freq:
 
 Sets the frequency of the pwm signal using integers.   
-(NCI) If the frequency is outside of the current resolution, set the resolution to the one that will work with the frequency set  
 syntax: *pwmObject* freq *intValue*  
-#### Example:
 ```
 set buzzer [pwm -channel 3 -resolution 17 -frequency 587 27]  
 $buzzer duty 0.5  
 after 1000
 $buzzer freq 440  
-(NCI)
-set buzzer [pwm -channel 3 -resolution 17 -frequency 587 27]  
-$buzzer duty 0.5  
-after 1000  
-$buzzer freq 294; #automatically switched from resolution 17 to 18 to support
 ```
 
-### (NCI) res:
 
-If automatically setting the resolution with the frequency is not feasable, let the user set the resolution of the pwm object without needing to replace the object with a new one of the new frequency  
-syntax: *pqmObject* freq *intValue*  
-#### Example:
-```
-set buzzer [pwm -channel 3 -resolution 17 -frequency 587 27]  
-$buzzer duty 0.5  
-after 1000  
-$buzzer res 18  
-$buzzer freq 294
-```
+### adc:
 
-## proc:
+Initialization: 
+set *adcObject* \[adc \-bitwidth *bitwidth* \-attenuation *addenuation* *pinNo*\]
 
-Creates a function that you can call in the future.  
-Define syntax: proc *functionName* {parameters} {function}  
-Call syntax: *functionName* *parameters*  
-#### Example:
-```
-Ex1:
-set led [gpio -mode out 12]  
-proc cycleLED {times} {  
-    global led  
-    for {set i 0} {$i < $times} {incr i} {  
-        $led on  
-        after 500  
-        $led off  
-        after 500  
-    }  
-}  
-cycleLED 5
-```
-#### Example 2:
-```
-set led [gpio -mode out 12]  
-proc cycleLED {times time} {  
-    global led  
-    for {set i 0} {$i < $times} {incr i} {  
-        $led on  
-        after $time  
-        $led off  
-        after $time  
-    }  
-}  
-cycleLED 5 500
-```
-#### Example 3:
-```
-set led [gpio -mode out 12]  
-proc cycleLED {} {  
-    global led  
-    for {set i 0} {$i < 3} {incr i} {  
-        $led on  
-        after 400  
-        $led off  
-        after 400  
-    }  
-}  
-cycleLED
-```
+#### ADC Command List:
 
-### Default values
 
-To set the default value of a proc parameter, use curly braces around the parameter and default value with   
-syntax: {*parameter defaultValue*}  
-While you can put parameters with default values in front of parameters without default values in the proc declaration, there is no point as you will have to declare the value for the parameter with default value.  
-```
-proc cycleLED { {times 5} time} {# there is no point for this order of declaration}
-``` 
-Rather, a more useful way of declaring this would be:  
-```
-proc cycleLED {time {times 5} } {#This way is much more functional as only need to input a value for time and not for times}
-```
-#### Example: 
-```
-ex: set led [gpio -mode out 12]  
-proc cycleLED {times {time 500} } {  
-    global led  
-    for {set i 0} {$i < $times} {incr i} {  
-        $led on  
-        after $time  
-        $led off  
-        after $time  
-    }  
-}  
-cycleLED 5  
-cycleLED 1 1000  
-cycleLED 2 3000
-```
+### i2c:
 
-## i2c:
+Initialization: 
+set *i2cObject* \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\]  
 
-Aside from the creation/calling of the i2c object, using the syntax: \[i2c -sda *sdaPin* -scl *sclPin* -freq *frequency*\], each i2c device needs extra setup.  
-While the extra setup can be done manually, example codes have been provided and are available for use  
+#### I2C Command List:
+- read
+- scan
+- timeout
+- write
 
-### (NCI) Access Examples through IDE:
-To access i2c example code through the IDE, go to Examples->i2c Examples and choose your correct i2c part.  
+#### read:
 
-### (NCI) Access Examples through Terminal:
-To access i2c example code through the terminal, go to the `/lilroot/examples/i2c_Examples/` directory  
-
-### read:
 Reads and returns the value from the i2c slave address  
 syntax: *i2cObject* read *Address* *bytesToRead*
-
-#### Example:
 ```
-set readVal [$i2cDriver read $_chipAddress 1]
+set i2cDriver [i2c 21 22 100000]
+set readVal [$i2cDriver read $address 1]
 ```
 
-### scan:
+#### scan:
 
-### timeout:
+Scans and returns all i2c slave addresses connected to i2c bus
+syntax: *i2cObject* scan
+```
+set i2cDriver [i2c 21 22 100000]
+puts "Addresses found:"
+foreach address [$i2cDriver scan] {
+    puts $address
+}
+```
 
-### write:
+#### timeout:
+
+#### write:
 
 ## spi:
 
