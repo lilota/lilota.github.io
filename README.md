@@ -7,7 +7,7 @@ A microcontroller flashed with Lilota uses [TCL](https://www.tcl-lang.org/about/
 
 # Prerequisites
 
-1. Supported Microcontroller: ESP32, ESP8266, Arduino Pico  
+1. Supported Microcontroller: ESP32, ESP8266, Raspberry Pi Pico  
    1. For microcontroller boards without built in serial programmers, you will also need a separate serial programmer  
 2. Computer with Linux, MacOS, or Windows  
 3. USB data cable (Some are power delivery only)  
@@ -521,7 +521,8 @@ set readVal [$i2cDriver read $address 1]
 #### scan:
 
 Scans and returns all i2c slave addresses connected to i2c bus
-syntax: *i2cObject* scan
+syntax: *i2cObject* scan -timeout *ms*
+default: 10ms
 ```
 set i2cDriver [i2c 21 22 100000]
 puts "Addresses found:"
@@ -530,9 +531,21 @@ foreach address [$i2cDriver scan] {
 }
 ```
 
-#### timeout:
-
 #### write:
+
+Writes the specified bits to the specified address on the i2c bus
+Syntax: *i2cObject* write *address* *value*
+```
+$i2cDriver write $addr $val
+```
+
+#### stop:
+
+Stops the I2C bus
+Syntax: *i2cObject* stop
+```
+$i2cDriver stop
+```
 
 ## spi:
 
