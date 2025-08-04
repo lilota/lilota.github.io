@@ -549,7 +549,104 @@ $i2cDriver stop
 
 ## spi:
 
+Similar to i2c, there is a section in the examples titled 'spi_Examples' which contains premade configurations for spi devices  
+Configures the serial peripheral interface  
+Base setup syntax: \[spi -mosi *mosiPin* -miso *misoPin* -clk *clkPin* -host *hostType*\]  
+For miso and mosi, if there is no pin, put '-1'  
+```
+set bus [spi -mosi 23 -miso -1 -clk 18]
+```
+
+### Define:
+
+cs: chip select  
+mode: SPI Mode  
+
+### Defaults:
+
+freq: 1000000  
+mode: 0  
+
+### add
+
+Add setup syntax: \[*spiBaseObject* add -cs *csPin* -mode *modeNo* -freq *freqInHz*\]  
+```
+set dev [$bus add -cs 5 -mode 0 -freq 4000000]
+```
+
+#### send
+
+transmits data over spi  
+syntax: *spiAddObject* send *sentData* -timeout *ms*  
+```
+$dev send $data
+```
+
+#### recv
+
+recieves N number of bytes over spi  
+syntax: *spiAddObject* recv *nBytes* -timeout *ms*  
+```
+$dev recieve 5 -timeout 10
+```
+
+#### xfer
+
+Transmits data and receives the result from that data  
+syntax: *spiAddObject* xfer *sentData* -timeout *ms*  
+```
+$dev xfer $data -timeout 10
+```
+
+#### acquire
+
+acquires the device from the bus  
+syntax: *spiAddObject* acquire
+```
+$dev acquire
+```
+
+#### release
+
+releases the device from the bus  
+syntax: *spiAddObject* release  
+```
+$dev release
+```
+
+#### remove
+
+removes the device from the bus  
+syntax: *spiAddObject* remove  
+```
+$dev remove
+```
+
+### destroy
+
+Frees the bus and all devices atteched to it  
+syntax: *spiBaseObject* destroy  
+```
+$bus destroy
+```
+
 ## adc:
+
+Converts inputs from analog to digital.  
+Setup syntax: \[adc -bitwidth *bitwidth* -attenuation *attenuation* \]  
+
+### Defaults:
+
+bitwidth: 12  
+attenuation: 0  
+
+### read
+
+Reads the raw value from the ADC channel
+Syntax: *adcObject* read
+```
+$adcObj read
+```
 
 ## wifi:  
 
