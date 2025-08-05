@@ -19,6 +19,10 @@ These are minor changes that are additional features to current modules
 ## Major Changes:
 These are major changes that may take much longer.
 
+### Premade Configurations for devices
+
+Similar to Tasmota's Blakadder which is a database for premade configurations for Tasmota, we should have our own database containing TCL scripts that will allow for easy setup of devices that we support.  
+
 ### i2s
 We need to also support i2s which we currently do not support
 
