@@ -29,7 +29,12 @@ A microcontroller flashed with Lilota uses [TCL](https://www.tcl-lang.org/about/
 
 # Useage
 
-To start, create a new TCL file 
+Before trying to configure a device using TCL scripts on your own, you may find that there are already premade TCL files with configurations for your specific device.  
+In order to access these premade configurations, go to examples -> Premade Configurations -> *your device's manufacturer* -> *your device*  
+If there is a premade configuration, select that option and the premade TCL scripts will load into your IDE, allowing you to flash those files onto your device  
+
+If there is not, you can create your own configuration by scripting using TCL.  
+To start, create a new TCL file  
 
 ## TCL Fundamentals
 
