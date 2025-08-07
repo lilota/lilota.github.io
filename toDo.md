@@ -38,5 +38,9 @@ This also applies to I2S, ADC, SPI
 ### Web IDE
 Currently the [web IDE](https://lilota.github.io/ide.html) literally does nothing is just there to look pretty.  
 We need to make this actually function and work.  
-We also need to detect for Firefox as Firefox does not support webserial and use another way to flash. 
+The Specifications are [here](https://github.com/lilota/lilota.github.io/blob/main/README.md#nci-lilota-ide)  
+We also need to detect for Firefox as Firefox does not support webserial and use another way to flash.  
 
+#### Auto discovery
+
+For the auto-discovery feature, I propose to use mDNS but any protocol that can do the same can also be used
