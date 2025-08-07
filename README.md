@@ -27,6 +27,92 @@ A microcontroller flashed with Lilota uses [TCL](https://www.tcl-lang.org/about/
 
 1. Follow the [contributing.md file](https://github.com/COMPAS-Lab/lilota/blob/main/CONTRIBUTING.md)
 
+# (NCI) Lilota IDE
+
+The Lilota IDE does 4 main things:
+- [Create, Edit, flash, and run TCL scripts]([https://github.com/lilota/lilota.github.io/blob/main/README.md#create-tcl-scripts](https://github.com/lilota/lilota.github.io/edit/main/README.md#create-edit-flash-and-run-tcl-scripts))
+- [Configure the Lilota system](https://github.com/lilota/lilota.github.io/edit/main/README.md#configure-the-lilota-system)
+- [Provide example code to copy from](https://github.com/lilota/lilota.github.io/edit/main/README.md#provide-example-code)
+- [Assist in efficient and easy coding](https://github.com/lilota/lilota.github.io/edit/main/README.md#assist-in-efficient-and-easy-coding)
+
+To access the Lilota IDE, click on the button that says Try IDE or the text that says IDE at the top bar  
+
+To connect to the Lilota system in the IDE, press the connect button and select the Lilota device you want to connect to from a dropdown menu.
+If a Lilota device is not found, you can also input the IP address that the Lilota device is at. 
+
+## Create, Edit, flash, and run TCL scripts
+
+### Create TCL Scripts
+
+To create a TCL script, go to File->New or press ctrl+alt+N on your keyboard  
+Upon creation, you will also be prompted to name the file. The .tcl ending will be added for you  
+
+### Edit TCL scripts
+
+To edit a TCL script, simply select on the TCL script that you want to edit on the left column and the file's contents will appear on the right text box.  
+After editing and before flashing, you should save your code.  
+To do that, go to File->Save or File->Save as to save your code as a new file.  
+You can also use ctrl+S for save or ctrl+alt+S for save as.  
+
+### Flash TCL scripts
+
+To flash or to transfer the TCL script onto the microcontroller, simply press the flash button at the top of the IDE, wait for the system to restart, and the file will have flashed onto Lilota.
+
+### Run TCL scripts
+
+To run a TCL script, press the run button on the top of the IDE or ctrl+alt+R on your keyboard.  
+If there are any changes not flashed onto the lilota system, there will be a prompt saying "There are unflashed changes, are you sure you want to run? the system will run as if the changes never existed" and either "yes" or "no" will be given as choices  
+
+## Configure the Lilota System
+
+Everything that can be configured is shown after pressing the Settings button
+
+### Name
+
+You can apply a custom name to the Lilota device to help identify it easier.
+After clicking save, the Lilota will restart. 
+
+### Assists
+
+If desired, a user can enable assists such as line numbers, syntax highting and suggestions, and auto tabbing, completion, and closing.
+
+### Wifi
+
+You will be prompted to choose which wifi netowrk to connect to.  
+Depending on the security on the network, you will be promted with boxes.  
+If it is WPA-PSK, you will be prompted to enter the password.  
+If it is WPA-Enterprise, you will be prompted for a username and password.  
+After saving, Lilota will restart, and Lilota will be connected to the new network  
+
+### Access Point
+
+If you prefer to use an access point, you can configure the ssid and password here  
+After saving, Lilota will restart, and Lilota will broadcast the new network  
+
+### MQTT
+
+[Setup instructions are here](https://github.com/lilota/lilota.github.io/edit/main/README.md#mqtt-1)
+
+## Provide Example Code
+
+Example code is provided in the IDE that can be copied from and edited. To access, press the examples button.  
+There will be examples for GPIO, PWM, ADC, I2C, I2S, SPI, MQTT, etc.
+
+## Assist in Efficient and easy Coding
+
+Coding assists can be turned on and off in the settings tab
+
+### Debugger
+
+If there is a bug, code can be ran in debug mode which will run code until it runs into stop flags where it can be resumed by the user
+To place stop flags, click on the left most part of the line. Before clicking, a stop flag will clicking to show where the stop flag will appear if placed.
+
+### Code folding
+
+If there is indented code, there is an option to fold that code to create a cleaner workspace. 
+Simply click on the downwards facing arrow on the line directly above the block of indented code.
+To unfold code, click on that, now right facing, arrow again.
+
 # Useage
 
 Before trying to configure a device using TCL scripts on your own, you may find that there are already premade TCL files with configurations for your specific device.  
