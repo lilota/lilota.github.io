@@ -3,61 +3,40 @@ import { Link, useLocation } from 'react-router-dom';
 
 export default function Header() {
   const location = useLocation();
-  const isHomePage = location.pathname === "/";
-
-  // Shared button style for nav links
-  const linkStyle = {
-    padding: '8px 16px',
-    textDecoration: 'none',
-    color: '#333',
-    fontWeight: '900',
-    borderRadius: '6px',
-    transition: 'all 0.2s ease-in-out',
-    fontSize: '22px',
-  };
+  const navItems = [
+    { name: 'Home', path: '/' },
+    { name: 'Flash', path: '/flash' },
+    { name: 'IDE', path: '/ide' },
+  ];
 
   return (
-    <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'white', borderBottom: '1px solid #ddd' }}>
-      <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '80px' }}>
-          
-          <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-            {/* Increased logo size to 50px */}
-            <img alt="Lilota Logo" src="/imgsrc/Lilota_Logo.png" height="50" style={{ display: 'block' }} />
+    <header className="sticky top-0 z-[1000] border-b border-[#ddd] bg-white">
+      <div className="mx-auto max-w-[1200px] px-5">
+        <div className="flex h-20 items-center justify-between">
+          <Link to="/" className="flex items-center">
+            <img alt="Lilota Logo" src="/imgsrc/Lilota_Logo.png" className="block h-[50px] w-auto" />
           </Link>
 
           <nav>
-            <ul style={{ display: 'flex', gap: '10px', listStyle: 'none', margin: 0, padding: 0 }}>
-              {[
-                { name: 'Home', path: '/' },
-                { name: 'Flash', path: '/flash' },
-                { name: 'IDE', path: '/ide' }
-              ].map((item) => (
+            <ul className="hidden items-center gap-2.5 md:flex">
+              {navItems.map((item) => (
                 <li key={item.path}>
-                  <Link 
-                    to={item.path} 
-                    style={linkStyle}
-                    onMouseOver={(e) => {
-                      e.target.style.background = '#f0f0f0';
-                      e.target.style.color = '#000';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.background = 'transparent';
-                      e.target.style.color = '#333';
-                    }}
+                  <Link
+                    to={item.path}
+                    className={`rounded-md px-4 py-2 text-[22px] font-black no-underline transition-colors duration-200 ${
+                      location.pathname === item.path ? 'bg-[#f0f0f0] text-black' : 'text-[#333] hover:bg-[#f0f0f0] hover:text-black'
+                    }`}
                   >
                     {item.name}
                   </Link>
                 </li>
               ))}
               <li>
-                <a 
-                  href="https://github.com/COMPAS-Lab/lilota" 
-                  target="_blank" 
+                <a
+                  href="https://github.com/COMPAS-Lab/lilota"
+                  target="_blank"
                   rel="noreferrer"
-                  style={linkStyle}
-                  onMouseOver={(e) => { e.target.style.background = '#333'; e.target.style.color = '#fff'; }}
-                  onMouseOut={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#333'; }}
+                  className="rounded-md px-4 py-2 text-[22px] font-black text-[#333] no-underline transition-colors duration-200 hover:bg-[#333] hover:text-white"
                 >
                   GitHub
                 </a>

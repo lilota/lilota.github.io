@@ -25,8 +25,7 @@ function App() {
   return (
     <Router>
       <Header />
-      {/* The main tag ensures the content always sits properly below the header */}
-      <main style={{ minHeight: 'calc(100vh - 70px)' }}> 
+      <main className="min-h-[calc(100vh-70px)]">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/flash" element={<Flash />} />

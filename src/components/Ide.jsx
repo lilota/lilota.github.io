@@ -155,28 +155,35 @@ export default function Ide() {
   // ----------------------------------------------------------------
   // RENDER UI
   // ----------------------------------------------------------------
+  const modeButtonClass = (mode) => `flex-1 cursor-pointer border-0 p-2 ${
+    connMode === mode ? 'bg-[#0e639c] text-white' : 'bg-transparent text-[#888] hover:text-white'
+  }`;
+
+  const statusClass = `mt-[15px] text-xs ${
+    status.includes('Ready') || status.includes('Connected') ? 'text-[#4caf50]' : 'text-[#f44336]'
+  }`;
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 70px)', background: '#1e1e1e' }}>
+    <div className="flex h-[calc(100vh-70px)] bg-[#1e1e1e]">
       
       {/* LEFT SIDEBAR: File Explorer & Connection */}
-      <div style={{ width: '320px', background: '#252526', color: '#cccccc', display: 'flex', flexDirection: 'column', borderRight: '1px solid #333' }}>
+      <div className="flex w-80 flex-col border-r border-[#333] bg-[#252526] text-[#cccccc]">
         
         {/* Connection Panel */}
-        <div style={{ padding: '15px', borderBottom: '1px solid #333' }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: '14px', color: '#fff' }}>CONNECTION</h3>
+        <div className="border-b border-[#333] p-[15px]">
+          <h3 className="mb-[15px] text-sm text-white">CONNECTION</h3>
           
           {/* Mode Tabs */}
-          <div style={{ display: 'flex', marginBottom: '15px', background: '#1e1e1e', borderRadius: '4px', overflow: 'hidden' }}>
+          <div className="mb-[15px] flex overflow-hidden rounded bg-[#1e1e1e]">
             <button 
               onClick={() => setConnMode('serial')}
-              style={{ flex: 1, padding: '8px', border: 'none', background: connMode === 'serial' ? '#0e639c' : 'transparent', color: connMode === 'serial' ? 'white' : '#888', cursor: 'pointer' }}
+              className={modeButtonClass('serial')}
             >
               USB Serial
             </button>
             <button 
               onClick={() => setConnMode('wifi')}
-              style={{ flex: 1, padding: '8px', border: 'none', background: connMode === 'wifi' ? '#0e639c' : 'transparent', color: connMode === 'wifi' ? 'white' : '#888', cursor: 'pointer' }}
+              className={modeButtonClass('wifi')}
             >
               WiFi (IP)
             </button>
@@ -188,14 +195,14 @@ export default function Ide() {
               {!portRef.current ? (
                 <button 
                   onClick={connectSerial}
-                  style={{ width: '100%', padding: '10px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                  className="w-full cursor-pointer rounded border-0 bg-[#4caf50] p-2.5 font-bold text-white transition-colors hover:bg-[#45a049]"
                 >
                   🔌 Connect Device
                 </button>
               ) : (
                 <button 
                   onClick={fetchFilesSerial}
-                  style={{ width: '100%', padding: '10px', background: '#0e639c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  className="w-full cursor-pointer rounded border-0 bg-[#0e639c] p-2.5 text-white transition-colors hover:bg-[#1177bb]"
                 >
                   🔄 Refresh File List
                 </button>
@@ -211,38 +218,36 @@ export default function Ide() {
                 value={deviceIp} 
                 onChange={(e) => setDeviceIp(e.target.value)}
                 placeholder="http://192.168.x.x"
-                style={{ width: '100%', padding: '8px', marginBottom: '10px', background: '#3c3c3c', border: '1px solid #555', color: 'white', borderRadius: '4px', boxSizing: 'border-box' }}
+                className="mb-2.5 w-full rounded border border-[#555] bg-[#3c3c3c] p-2 text-white placeholder:text-[#888]"
               />
               <button 
                 onClick={fetchFilesWifi}
-                style={{ width: '100%', padding: '8px', background: '#0e639c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                className="w-full cursor-pointer rounded border-0 bg-[#0e639c] p-2 text-white transition-colors hover:bg-[#1177bb]"
               >
                 🔄 Refresh File List
               </button>
             </div>
           )}
 
-          <div style={{ marginTop: '15px', fontSize: '12px', color: status.includes('Ready') || status.includes('Connected') ? '#4caf50' : '#f44336' }}>
+          <div className={statusClass}>
             Status: {status}
           </div>
         </div>
 
         {/* File List */}
-        <div style={{ padding: '15px', flexGrow: 1, overflowY: 'auto' }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#fff' }}>FILE EXPLORER</h3>
+        <div className="grow overflow-y-auto p-[15px]">
+          <h3 className="mb-2.5 text-sm text-white">FILE EXPLORER</h3>
           {files.length === 0 ? (
-            <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#666' }}>No files found. Connect to fetch.</div>
+            <div className="text-xs italic text-[#666]">No files found. Connect to fetch.</div>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul className="m-0 list-none p-0">
               {files.map((filename, index) => (
                 <li 
                   key={index} 
-                  style={{ padding: '8px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center' }}
-                  onMouseOver={(e) => e.currentTarget.style.background = '#2a2d2e'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                  className="flex cursor-pointer items-center border-b border-[#333] p-2 text-[13px] hover:bg-[#2a2d2e]"
                   onClick={() => alert(`In the future, clicking ${filename} will load its contents into the editor!`)}
                 >
-                  📄 <span style={{ marginLeft: '8px' }}>{filename}</span>
+                  📄 <span className="ml-2">{filename}</span>
                 </li>
               ))}
             </ul>
@@ -251,29 +256,16 @@ export default function Ide() {
       </div>
 
       {/* RIGHT PANEL: Editor */}
-      <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '10px 20px', background: '#1e1e1e', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'flex-end' }}>
+      <div className="flex grow flex-col">
+        <div className="flex justify-end border-b border-[#333] bg-[#1e1e1e] px-5 py-2.5">
           <button 
             onClick={executeCode}
-            style={{ 
-                padding: '10px 20px', 
-                background: '#4caf50', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '6px', 
-                cursor: 'pointer', 
-                fontWeight: 'bold',
-                transition: 'transform 0.1s, background 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.background = '#45a049'}
-            onMouseOut={(e) => e.target.style.background = '#4caf50'}
-            onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+            className="cursor-pointer rounded-md border-0 bg-[#4caf50] px-5 py-2.5 font-bold text-white transition duration-200 hover:bg-[#45a049] active:scale-95"
             >
             ▶ Execute Script
             </button>
         </div>
-        <div style={{ flexGrow: 1 }}>
+        <div className="grow">
           <Editor
             height="100%"
             defaultLanguage="tcl"
