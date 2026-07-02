@@ -1,3 +1,5 @@
+import React from 'react'
+
 export default function Platforms() {
   return (
     <section id="platforms" className="platforms">
