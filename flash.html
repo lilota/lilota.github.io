@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lilota Web Installer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script
+        type="module"
+        src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"
+    ></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo"><img alt="Lilota Logo" src="imgsrc/Lilota_Logo.png" height="40"></a>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="index.html#platforms">Platforms</a></li>
+                        <li><a href="index.html#documentation">Documentation</a></li>
+                        <li><a href="flash.html">Flash</a></li>
+                        <li><a href="ide.html">IDE</a></li>
+                        <li><a href="https://github.com/COMPAS-Lab/lilota" target="_blank">GitHub</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Lilota Web Installer</h1>
+            <p>Flash Lilota firmware to compatible ESP32 boards from your browser.</p>
+            <a href="index.html" class="cta-button">Back to Home</a>
+        </div>
+    </section>
+
+    <section class="documentation">
+        <div class="container">
+            <div class="installer-panel doc-section">
+                <h3>Flash Firmware</h3>
+                <p>This tool uses the Web Serial API to flash the Lilota firmware to compatible ESP32 boards.</p>
+                <p>Compatible browsers: Chrome, Edge, Firefox (versions 151 and above), and Opera.</p>
+                <esp-web-install-button manifest="/flash/manifest.json">
+                    <span slot="unsupported">Sorry, your browser isn't compatible with the Web Serial API!</span>
+                    <span slot="not-allowed">Visit this page over HTTPS or <code>localhost</code> to use the web installer.</span>
+                </esp-web-install-button>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <p>&copy; 2024 Lilota. Open source embedded systems firmware.</p>
+                </div>
+                <div class="social-links">
+                    <a href="https://github.com/COMPAS-Lab/lilota" title="GitHub" target="_blank">📚</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
