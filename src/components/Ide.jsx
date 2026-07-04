@@ -1,282 +1,583 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import '@xterm/xterm/css/xterm.css';
+
+const PROMPT_LINE_RE = /^\S+:\S*#\s*$/;
+const PROMPT_ECHO_RE = /^\S+:\S*#\s+\S.*$/;
+// NEW: Reliably detects a prompt attached to the very end of the output buffer, 
+// ensuring it's bounded by a space or newline so we don't accidentally match filenames.
+const PROMPT_END_RE = /(?:^|[\r\n\s])\S+:\S*#\s*$/;
+
+// Utility to clean terminal color codes
+const stripAnsi = (str) => str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
+
+function normalizePath(p) {
+  return p.replace(/\/{2,}/g, '/');
+}
+
+function buildFileTree(paths) {
+  const root = { folders: {}, files: [] };
+  for (const path of paths) {
+    const parts = path.split('/').filter(Boolean);
+    let node = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      if (!node.folders[part]) node.folders[part] = { folders: {}, files: [] };
+      node = node.folders[part];
+    }
+    node.files.push({ name: parts[parts.length - 1], fullPath: path });
+  }
+  return root;
+}
+
+function FileTreeNode({ node, path, depth, expanded, toggleExpand, activeFile, onOpenFile }) {
+  const folderNames = Object.keys(node.folders).sort((a, b) => a.localeCompare(b));
+  const fileEntries = [...node.files].sort((a, b) => a.name.localeCompare(b.name));
+
+  return (
+    <>
+      {folderNames.map((name) => {
+        const folderPath = path ? `${path}/${name}` : name;
+        const isOpen = !!expanded[folderPath];
+        return (
+          <React.Fragment key={folderPath}>
+            <button
+              onClick={() => toggleExpand(folderPath)}
+              className="w-full text-left text-[12px] px-1 py-1 rounded hover:bg-[#333] flex items-center gap-1 truncate"
+              style={{ paddingLeft: `${depth * 12 + 4}px` }}
+              title={folderPath}
+            >
+              <span className="w-3 inline-block text-gray-500">{isOpen ? '▾' : '▸'}</span>
+              <span className="text-yellow-500">📁</span>
+              <span className="truncate">{name}</span>
+            </button>
+            {isOpen && (
+              <FileTreeNode
+                node={node.folders[name]}
+                path={folderPath}
+                depth={depth + 1}
+                expanded={expanded}
+                toggleExpand={toggleExpand}
+                activeFile={activeFile}
+                onOpenFile={onOpenFile}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+      {fileEntries.map((f) => (
+        <button
+          key={f.fullPath}
+          onClick={() => onOpenFile(f.fullPath)}
+          className={`w-full text-left text-[12px] px-1 py-1 rounded hover:bg-[#333] flex items-center gap-1 truncate ${
+            activeFile === f.fullPath ? 'bg-[#0e639c] text-white' : ''
+          }`}
+          style={{ paddingLeft: `${depth * 12 + 20}px` }}
+          title={f.fullPath}
+        >
+          <span className="text-gray-400">📄</span>
+          <span className="truncate">{f.name}</span>
+        </button>
+      ))}
+    </>
+  );
+}
 
 export default function Ide() {
-  const [code, setCode] = useState('# Write your LIL script here\nputs "Hello Lilota!"\n');
-  const [files, setFiles] = useState([]);
+  const [code, setCode] = useState('# Write your LIL script here\nputs "Hello Lilota!"');
   const [status, setStatus] = useState('Disconnected');
-  
-  // Connection Mode State
-  const [connMode, setConnMode] = useState('serial'); // 'serial' or 'wifi'
-  const [deviceIp, setDeviceIp] = useState('http://192.168.4.1');
-  
-  // Serial API Refs
+  const [connected, setConnected] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [activeFile, setActiveFile] = useState(null);
+  const [loadingFile, setLoadingFile] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [expanded, setExpanded] = useState({});
+
+  const terminalRef = useRef(null);
+  const xtermInstance = useRef(null);
   const portRef = useRef(null);
   const writerRef = useRef(null);
   const readerRef = useRef(null);
-  const serialBuffer = useRef('');
+  const keepReadingRef = useRef(false);
 
-  // ----------------------------------------------------------------
-  // SERIAL CONNECTION LOGIC
-  // ----------------------------------------------------------------
-  
-  const connectSerial = async () => {
-    if (!('serial' in navigator)) {
-      alert("Web Serial is not supported in this browser. Please use Chrome or Edge.");
-      return;
-    }
+  const captureModeRef = useRef(null);
+  const captureBufferRef = useRef('');
+  const captureFilenameRef = useRef(null);
+  const captureCommandRef = useRef(null);
+  const captureMarkerRef = useRef(null);
+  const captureCutoffRef = useRef(0);
+  const captureTimeoutRef = useRef(null);
+  const captureResolveRef = useRef(null);
 
-    try {
-      // 1. Request port access from user
-      const port = await navigator.serial.requestPort();
-      // ESP32 and Pico typically use 115200 baud
-      await port.open({ baudRate: 115200 }); 
-      portRef.current = port;
-      setStatus('Serial Connected');
+  const opLockRef = useRef(Promise.resolve());
+  const withLock = (fn) => {
+    const run = opLockRef.current.then(fn, fn);
+    opLockRef.current = run.catch(() => {});
+    return run;
+  };
 
-      // 2. Setup Writer (to send TCL commands)
-      const textEncoder = new TextEncoderStream();
-      textEncoder.readable.pipeTo(port.writable);
-      writerRef.current = textEncoder.writable.getWriter();
+  const markerCounterRef = useRef(0);
+  const makeMarker = () => `__CMD_${Date.now()}_${(markerCounterRef.current++).toString(36)}__`;
 
-      // 3. Setup Reader (to listen to MCU output)
-      startSerialReadLoop(port);
-      
-      // Auto-fetch files upon connection
-      setTimeout(fetchFilesSerial, 500);
+  const CAPTURE_TIMEOUT_MS = 8000;
 
-    } catch (err) {
-      console.error("Serial connection failed:", err);
-      setStatus('Serial Error');
+  const clearCaptureTimeout = () => {
+    if (captureTimeoutRef.current) {
+      clearTimeout(captureTimeoutRef.current);
+      captureTimeoutRef.current = null;
     }
   };
 
-  const startSerialReadLoop = async (activePort) => {
-    const textDecoder = new TextDecoderStream();
-    activePort.readable.pipeTo(textDecoder.writable);
-    readerRef.current = textDecoder.readable.getReader();
+  const resetCaptureState = () => {
+    clearCaptureTimeout();
+    captureModeRef.current = null;
+    captureBufferRef.current = '';
+    captureFilenameRef.current = null;
+    captureCommandRef.current = null;
+    captureMarkerRef.current = null;
+    captureCutoffRef.current = 0;
+  };
 
-    try {
-      while (true) {
-        const { value, done } = await readerRef.current.read();
-        if (done) break;
-        if (value) {
-          // Append incoming text to our invisible buffer
-          serialBuffer.current += value;
+  const resolveCapture = () => {
+    const resolve = captureResolveRef.current;
+    captureResolveRef.current = null;
+    if (resolve) resolve();
+  };
+
+  const timeoutCapture = () => {
+    const mode = captureModeRef.current;
+    const leftover = captureBufferRef.current;
+    resetCaptureState();
+    if (leftover) xtermInstance.current.write(leftover);
+    xtermInstance.current.write(`\r\n--- ${mode || 'command'} timed out waiting for device ---\r\n`);
+    setLoadingFiles(false);
+    setLoadingFile(false);
+    setIsSaving(false);
+    resolveCapture();
+  };
+
+  const armWait = () => {
+    clearCaptureTimeout();
+    captureTimeoutRef.current = setTimeout(timeoutCapture, CAPTURE_TIMEOUT_MS);
+    return new Promise((resolve) => { captureResolveRef.current = resolve; });
+  };
+
+  const armCaptureAndWait = (marker) => {
+    captureCutoffRef.current = captureBufferRef.current.length;
+    captureMarkerRef.current = marker;
+    clearCaptureTimeout();
+    captureTimeoutRef.current = setTimeout(timeoutCapture, CAPTURE_TIMEOUT_MS);
+    return new Promise((resolve) => { captureResolveRef.current = resolve; });
+  };
+
+  useEffect(() => {
+    const term = new Terminal({
+      theme: {
+        background: '#000000',
+        foreground: '#cccccc',
+        cursor: '#ffffff',
+        selectionBackground: '#0e639c'
+      },
+      fontFamily: '"Fira Code", monospace',
+      fontSize: 13,
+      cursorBlink: true,
+    });
+
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(terminalRef.current);
+    fitAddon.fit();
+
+    xtermInstance.current = term;
+
+    term.onData((data) => {
+      if (writerRef.current) {
+        const encoder = new TextEncoder();
+        writerRef.current.write(encoder.encode(data));
+      }
+    });
+
+    return () => term.dispose();
+  }, []);
+
+  const isEchoedCommandLine = (line) => {
+    const trimmed = stripAnsi(line.trim());
+    if (!trimmed) return false;
+    if (!captureCommandRef.current) return false;
+    if (trimmed === captureCommandRef.current) return true;
+    if (PROMPT_ECHO_RE.test(trimmed) && trimmed.endsWith(captureCommandRef.current)) return true;
+    return false;
+  };
+
+  const parseFileListing = (raw) => {
+    const cleanRaw = stripAnsi(raw);
+    const startTag = '___FILESTART___';
+    const marker = captureMarkerRef.current;
+
+    // 1. Find where our data block starts and ends
+    const startIndex = cleanRaw.indexOf(startTag);
+    const endIndex = cleanRaw.indexOf(marker);
+
+    // If we haven't received the full response yet, return empty
+    if (startIndex === -1 || endIndex === -1) {
+      return [];
+    }
+
+    // 2. Extract only the content between the start tag and the marker
+    const content = cleanRaw.substring(startIndex + startTag.length, endIndex);
+
+    // 3. Split by any whitespace (spaces, tabs, newlines) 
+    // and filter out any empty strings resulting from the split
+    const files = content
+      .split(/\s+/)
+      .map(f => f.trim())
+      .filter(f => f.length > 0)
+      .map(f => normalizePath(f)); // Keep your path normalization
+
+    return files;
+  };
+
+  const parseFileContent = (raw) => {
+    let cleanRaw = stripAnsi(raw);
+    
+    // Strip trailing prompt from the file output
+    cleanRaw = cleanRaw.replace(PROMPT_END_RE, '');
+
+    const lines = cleanRaw.split(/\r?\n/);
+    const contentLines = lines.filter((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return true;
+      if (PROMPT_LINE_RE.test(trimmed)) return false;
+      if (isEchoedCommandLine(line)) return false;
+      return true;
+    });
+    while (contentLines.length && contentLines[0].trim() === '') contentLines.shift();
+    while (contentLines.length && contentLines[contentLines.length - 1].trim() === '') contentLines.pop();
+    return contentLines.join('\n');
+  };
+
+  const handleIncoming = (text) => {
+    if (captureModeRef.current) {
+      captureBufferRef.current += text;
+
+      // Reset the timeout on every chunk of incoming data — we only want
+      // to time out on true silence from the device, not on total elapsed
+      // time. Large recursive listings can legitimately take a while to
+      // finish streaming, even though data is still actively arriving.
+      clearCaptureTimeout();
+      captureTimeoutRef.current = setTimeout(timeoutCapture, CAPTURE_TIMEOUT_MS);
+
+      const cleanBuffer = stripAnsi(captureBufferRef.current);
+      const mode = captureModeRef.current;
+      let isDone = false;
+
+      if (mode === 'save' || mode === 'listfiles') {
+        const marker = captureMarkerRef.current;
+        if (!marker) return;
+        const markerIdx = cleanBuffer.indexOf(marker);
+        if (markerIdx === -1) return; // Wait until marker arrives
+
+        const tail = cleanBuffer.slice(markerIdx);
+        isDone = PROMPT_END_RE.test(tail);
+      } else {
+        isDone = PROMPT_END_RE.test(cleanBuffer);
+        if (!isDone) {
+          console.log('[capture] not done yet, buffer tail:', JSON.stringify(cleanBuffer.slice(-60)));
         }
       }
-    } catch (error) {
-      console.error("Serial Read Error:", error);
-    } finally {
-      readerRef.current.releaseLock();
-    }
-  };
 
-  const fetchFilesSerial = async () => {
-    if (!writerRef.current) {
-      alert("Please connect via serial first.");
+      if (!isDone) return;
+
+      const filename = captureFilenameRef.current;
+      const rawContent = captureBufferRef.current;
+      resetCaptureState();
+
+      if (mode === 'listfiles') {
+        setFiles(parseFileListing(rawContent));
+        setLoadingFiles(false);
+      } else if (mode === 'cat') {
+        setCode(parseFileContent(rawContent));
+        setActiveFile(filename);
+        setLoadingFile(false);
+      } else if (mode === 'save') {
+        setIsSaving(false);
+        xtermInstance.current.write(`\r\n--- Save Complete ---\r\n`);
+      }
+
+      resolveCapture();
+      if (mode === 'save') refreshFiles();
       return;
     }
 
-    setStatus('Fetching via Serial...');
-    serialBuffer.current = ''; // Clear out old data
-    
-    try {
-      // Send the listfiles command. 
-      // We wrap it in unique markers so we can parse it out of the REPL echo.
-      const cmd = 'puts "---FILESTART---"; puts [join [listfiles] "\\n"]; puts "---FILEEND---"\r\n';
-      await writerRef.current.write(cmd);
+    xtermInstance.current.write(text);
+  };
 
-      // Wait 500ms for the MCU to process and stream the data back
-      setTimeout(() => {
-        const output = serialBuffer.current;
-        const startIndex = output.indexOf('---FILESTART---');
-        const endIndex = output.indexOf('---FILEEND---');
-
-        if (startIndex !== -1 && endIndex !== -1) {
-          // Extract just the block between our markers
-          const fileBlock = output.substring(startIndex + 15, endIndex).trim();
-          
-          // Split by newline and clean up the strings
-          const fileList = fileBlock.split('\n')
-            .map(line => line.trim())
-            .filter(line => line !== '' && !line.includes('---'));
-            
-          setFiles(fileList);
-          setStatus('Serial Ready');
-        } else {
-          console.warn("Could not parse file list from MCU:", output);
-          setStatus('Parse Error');
-        }
-      }, 500);
-    } catch (err) {
-      console.error("Write failed", err);
-      setStatus('Serial Error');
+  const slowWrite = async (text) => {
+    if (!writerRef.current) return;
+    const encoder = new TextEncoder();
+    for (let i = 0; i < text.length; i++) {
+      await writerRef.current.write(encoder.encode(text[i]));
+      await new Promise((resolve) => setTimeout(resolve, 2));
     }
   };
 
-  // ----------------------------------------------------------------
-  // WIFI CONNECTION LOGIC (Legacy fallback)
-  // ----------------------------------------------------------------
-
-  const fetchFilesWifi = async () => {
-    setStatus('Connecting to WiFi IP...');
-    try {
-      const targetUrl = `${deviceIp.replace(/\/$/, '')}/file/list`;
-      const response = await fetch(targetUrl, { method: 'GET', cache: 'no-store' });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      
-      const data = await response.text();
-      const fileList = data.split('\n').filter(line => line.trim() !== '');
-      setFiles(fileList);
-      setStatus('WiFi Ready');
-    } catch (err) {
-      console.error("Fetch failed", err);
-      setStatus('WiFi Connection Failed');
+  const toggleConnection = async () => {
+    if (portRef.current) {
+      keepReadingRef.current = false;
+      if (readerRef.current) await readerRef.current.cancel();
+      if (writerRef.current) writerRef.current.releaseLock();
+      await portRef.current.close();
+      portRef.current = null;
+      setStatus('Disconnected');
+      setConnected(false);
       setFiles([]);
-    }
-  };
-
-  // ----------------------------------------------------------------
-  // EXECUTION
-  // ----------------------------------------------------------------
-
-  const executeCode = async () => {
-    if (connMode === 'serial' && writerRef.current) {
-      // Execute directly over serial REPL
-      await writerRef.current.write(code + '\r\n');
-      alert("Code sent over Serial!");
+      setActiveFile(null);
+      setExpanded({});
+      resetCaptureState();
+      resolveCapture();
+      setLoadingFiles(false);
+      setLoadingFile(false);
+      setIsSaving(false);
+      xtermInstance.current.write('--- Disconnected ---\r\n');
     } else {
-      // In the future, implement the WiFi /execute/ POST request here
-      alert("Execution over WiFi not yet configured in UI.");
+      const port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 115200 });
+      portRef.current = port;
+      writerRef.current = port.writable.getWriter();
+      setStatus('Connected');
+      setConnected(true);
+      xtermInstance.current.write('--- Connected ---\r\n');
+      keepReadingRef.current = true;
+
+      const decoder = new TextDecoder();
+      const readLoop = (async () => {
+        while (port.readable && keepReadingRef.current) {
+          readerRef.current = port.readable.getReader();
+          try {
+            while (true) {
+              const { value, done } = await readerRef.current.read();
+              if (done) break;
+              handleIncoming(decoder.decode(value));
+            }
+          } finally {
+            readerRef.current.releaseLock();
+          }
+        }
+      })();
+
+      setTimeout(() => {
+        if (writerRef.current) slowWrite('\r');
+      }, 300);
+
+      await readLoop;
     }
   };
 
-  // ----------------------------------------------------------------
-  // RENDER UI
-  // ----------------------------------------------------------------
-  const modeButtonClass = (mode) => `flex-1 cursor-pointer border-0 p-2 ${
-    connMode === mode ? 'bg-[#0e639c] text-white' : 'bg-transparent text-[#888] hover:text-white'
-  }`;
+  const hardReset = async () => {
+    if (!portRef.current) return;
+    try {
+      // Standard ESP hardware reset sequence via WebSerial DTR/RTS
+      await portRef.current.setSignals({ dataTerminalReady: false, requestToSend: true });
+      await new Promise(r => setTimeout(r, 100));
+      await portRef.current.setSignals({ dataTerminalReady: false, requestToSend: false });
+      
+      xtermInstance.current.write('\r\n--- Hard Reset Sent ---\r\n');
+      
+      // Clear IDE state to prepare for fresh boot
+      setFiles([]);
+      setActiveFile(null);
+      resetCaptureState();
+      setLoadingFiles(false);
+      setLoadingFile(false);
+      setIsSaving(false);
+    } catch (err) {
+      console.error("Reset failed:", err);
+      xtermInstance.current.write('\r\n--- Reset Failed (Browser/Device may not support signals) ---\r\n');
+    }
+  };
 
-  const statusClass = `mt-[15px] text-xs ${
-    status.includes('Ready') || status.includes('Connected') ? 'text-[#4caf50]' : 'text-[#f44336]'
-  }`;
+  const refreshFiles = () => withLock(async () => {
+    if (!writerRef.current) return;
+    captureModeRef.current = 'listfiles';
+    captureBufferRef.current = '';
+    captureFilenameRef.current = null;
+    setLoadingFiles(true);
+
+    const marker = makeMarker();
+    const done = armCaptureAndWait(marker);
+
+    // 1. A single, short string! No buffer overflows.
+    // Spaces protect the semicolons, and ;# protects the \r from the parser.
+    const cmd = `puts "___FILESTART___" ; puts [listfiles] ; puts "${marker}" ;# \r`;
+    
+    // We can use standard write here instead of slowWrite because the command is short
+    await writerRef.current.write(cmd);
+    
+    await done;
+  });
+
+  const openFile = (filename) => withLock(async () => {
+    if (!writerRef.current) return;
+    captureModeRef.current = 'cat';
+    captureBufferRef.current = '';
+    captureFilenameRef.current = filename;
+    captureCommandRef.current = `cat ${filename}`;
+    setLoadingFile(true);
+
+    const done = armWait();
+    await slowWrite(`cat ${filename}\r`);
+    await done;
+  });
+
+  const createNewFile = () => {
+    const filename = prompt("Enter a name for the new file (e.g., /app.tcl):");
+    if (filename) {
+      setActiveFile(filename);
+      setCode(`# New file: ${filename}\n`);
+    }
+  };
+
+  const saveFile = () => withLock(async () => {
+    if (!writerRef.current) return;
+    if (!activeFile) {
+      alert("Please create a new file or select an existing one first.");
+      return;
+    }
+
+    setIsSaving(true);
+    captureModeRef.current = 'save';
+    captureBufferRef.current = '';
+    captureFilenameRef.current = null;
+
+    await slowWrite('set _buf ""\r');
+    await new Promise(r => setTimeout(r, 100));
+
+    const lines = code.split('\n');
+    for (let line of lines) {
+      const safeLine = line
+        .replace(/\\/g, '\\\\')
+        .replace(/\$/g, '\\$')
+        .replace(/\[/g, '\\[')
+        .replace(/\]/g, '\\]')
+        .replace(/"/g, '\\"');
+
+      await slowWrite(`append _buf "${safeLine}\\n"\r`);
+      await new Promise(r => setTimeout(r, 50));
+    }
+
+    await slowWrite(`write ${activeFile} $_buf\r`);
+    await new Promise(r => setTimeout(r, 150));
+
+    await slowWrite('set _buf ""\r');
+    await new Promise(r => setTimeout(r, 50));
+
+    const marker = makeMarker();
+    const done = armCaptureAndWait(marker);
+    await slowWrite(`puts "${marker}"\r`);
+    await done;
+  });
+
+  const executeCode = () => withLock(async () => {
+    if (!writerRef.current) return;
+    for (let line of code.split('\n')) {
+      await slowWrite(line.replace('\r', '') + '\r');
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  });
+
+  const toggleExpand = (folderPath) => {
+    setExpanded((prev) => ({ ...prev, [folderPath]: !prev[folderPath] }));
+  };
+
+  const tree = useMemo(() => buildFileTree(files), [files]);
 
   return (
-    <div className="flex h-[calc(100vh-70px)] bg-[#1e1e1e]">
-      
-      {/* LEFT SIDEBAR: File Explorer & Connection */}
-      <div className="flex w-80 flex-col border-r border-[#333] bg-[#252526] text-[#cccccc]">
-        
-        {/* Connection Panel */}
-        <div className="border-b border-[#333] p-[15px]">
-          <h3 className="mb-[15px] text-sm text-white">CONNECTION</h3>
-          
-          {/* Mode Tabs */}
-          <div className="mb-[15px] flex overflow-hidden rounded bg-[#1e1e1e]">
-            <button 
-              onClick={() => setConnMode('serial')}
-              className={modeButtonClass('serial')}
-            >
-              USB Serial
-            </button>
-            <button 
-              onClick={() => setConnMode('wifi')}
-              className={modeButtonClass('wifi')}
-            >
-              WiFi (IP)
-            </button>
+    <div className="flex h-[calc(100vh-70px)] bg-[#1e1e1e] text-white">
+      <div className="w-[220px] bg-[#252526] p-4 border-r border-[#333] flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button onClick={toggleConnection} className={`flex-1 p-2 rounded font-bold text-sm ${connected ? 'bg-red-700' : 'bg-blue-700'}`}>
+            {connected ? 'Disconnect' : 'Connect'}
+          </button>
+          <button 
+            onClick={hardReset} 
+            disabled={!connected} 
+            className="w-10 p-2 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm font-bold flex items-center justify-center" 
+            title="Hard Reset Board"
+          >
+            ↻
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={refreshFiles} disabled={!connected} className="flex-1 p-2 bg-[#333] hover:bg-[#444] disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm">
+            Refresh
+          </button>
+          <button onClick={createNewFile} disabled={!connected} className="flex-1 p-2 bg-[#0e639c] hover:bg-[#1177bb] disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm">
+            + New
+          </button>
+        </div>
+
+        <div className="mt-2 flex-1 min-h-0 flex flex-col border-t border-[#333] pt-2">
+          <div className="text-[10px] uppercase text-gray-500 mb-1 flex items-center justify-between">
+            <span>Files</span>
+            {(loadingFiles || loadingFile || isSaving) && <span className="text-gray-400">…</span>}
           </div>
-
-          {/* Serial Controls */}
-          {connMode === 'serial' && (
-            <div>
-              {!portRef.current ? (
-                <button 
-                  onClick={connectSerial}
-                  className="w-full cursor-pointer rounded border-0 bg-[#4caf50] p-2.5 font-bold text-white transition-colors hover:bg-[#45a049]"
-                >
-                  🔌 Connect Device
-                </button>
-              ) : (
-                <button 
-                  onClick={fetchFilesSerial}
-                  className="w-full cursor-pointer rounded border-0 bg-[#0e639c] p-2.5 text-white transition-colors hover:bg-[#1177bb]"
-                >
-                  🔄 Refresh File List
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* WiFi Controls */}
-          {connMode === 'wifi' && (
-            <div>
-              <input 
-                type="text" 
-                value={deviceIp} 
-                onChange={(e) => setDeviceIp(e.target.value)}
-                placeholder="http://192.168.x.x"
-                className="mb-2.5 w-full rounded border border-[#555] bg-[#3c3c3c] p-2 text-white placeholder:text-[#888]"
-              />
-              <button 
-                onClick={fetchFilesWifi}
-                className="w-full cursor-pointer rounded border-0 bg-[#0e639c] p-2 text-white transition-colors hover:bg-[#1177bb]"
-              >
-                🔄 Refresh File List
-              </button>
-            </div>
-          )}
-
-          <div className={statusClass}>
-            Status: {status}
+          <div className="flex-1 overflow-y-auto flex flex-col gap-0.5">
+            {files.length === 0 && !loadingFiles && (
+              <div className="text-[11px] text-gray-600 italic px-1">
+                {connected ? 'No files loaded' : 'Connect to browse'}
+              </div>
+            )}
+            <FileTreeNode
+              node={tree}
+              path=""
+              depth={0}
+              expanded={expanded}
+              toggleExpand={toggleExpand}
+              activeFile={activeFile}
+              onOpenFile={openFile}
+            />
           </div>
         </div>
 
-        {/* File List */}
-        <div className="grow overflow-y-auto p-[15px]">
-          <h3 className="mb-2.5 text-sm text-white">FILE EXPLORER</h3>
-          {files.length === 0 ? (
-            <div className="text-xs italic text-[#666]">No files found. Connect to fetch.</div>
-          ) : (
-            <ul className="m-0 list-none p-0">
-              {files.map((filename, index) => (
-                <li 
-                  key={index} 
-                  className="flex cursor-pointer items-center border-b border-[#333] p-2 text-[13px] hover:bg-[#2a2d2e]"
-                  onClick={() => alert(`In the future, clicking ${filename} will load its contents into the editor!`)}
-                >
-                  📄 <span className="ml-2">{filename}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <div className="text-[10px] text-gray-500 uppercase">{status}</div>
       </div>
 
-      {/* RIGHT PANEL: Editor */}
-      <div className="flex grow flex-col">
-        <div className="flex justify-end border-b border-[#333] bg-[#1e1e1e] px-5 py-2.5">
-          <button 
-            onClick={executeCode}
-            className="cursor-pointer rounded-md border-0 bg-[#4caf50] px-5 py-2.5 font-bold text-white transition duration-200 hover:bg-[#45a049] active:scale-95"
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="p-2 border-b border-[#333] flex items-center justify-between">
+          <div className="text-xs text-gray-400 truncate">{activeFile || 'untitled.tcl'}</div>
+          <div className="flex gap-2">
+            <button
+              onClick={executeCode}
+              disabled={!connected}
+              className="px-4 py-1 bg-[#333] hover:bg-[#444] disabled:opacity-40 rounded text-sm font-medium"
             >
-            ▶ Execute Script
+              Run
             </button>
+            <button
+              onClick={saveFile}
+              disabled={!connected || isSaving}
+              className="px-4 py-1 bg-[#0e639c] hover:bg-[#1177bb] disabled:opacity-40 rounded text-sm font-medium"
+            >
+              {isSaving ? 'Saving...' : 'Save File'}
+            </button>
+          </div>
         </div>
-        <div className="grow">
+        <div className="flex-[3] min-h-0">
           <Editor
-            height="100%"
-            defaultLanguage="tcl"
             theme="vs-dark"
+            language="tcl"
             value={code}
-            onChange={(value) => setCode(value)}
-            options={{ fontSize: 14, minimap: { enabled: false }, padding: { top: 20 } }}
+            onChange={setCode}
+            options={{ minimap: { enabled: false } }}
           />
         </div>
+        <div className="flex-1 bg-black p-2 border-t border-[#333] relative min-h-0">
+          <div ref={terminalRef} className="h-full" />
+        </div>
       </div>
-      
     </div>
   );
 }
