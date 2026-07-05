@@ -10,8 +10,13 @@ const PROMPT_ECHO_RE = /^\S+:\S*#\s+\S.*$/;
 // ensuring it's bounded by a space or newline so we don't accidentally match filenames.
 const PROMPT_END_RE = /(?:^|[\r\n\s])\S+:\S*#\s*$/;
 
-// Utility to clean terminal color codes
-const stripAnsi = (str) => str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
+// Enhanced utility to completely strip ANSI colors, bracketed paste modes, and null bytes
+const stripAnsi = (str) => {
+  let s = str.replace(/\x00/g, ''); // Strip null bytes common in serial streams
+  s = s.replace(/\x1B\[[0-9;?]*[a-zA-Z]/g, ''); // The '?' is critical to catch modern shell codes
+  s = s.replace(/\x1B\][^\x07]*\x07/g, ''); // Strip OSC sequences (like window titles)
+  return s;
+};
 
 function normalizePath(p) {
   return p.replace(/\/{2,}/g, '/');
@@ -110,6 +115,7 @@ export default function Ide() {
   const captureMarkerRef = useRef(null);
   const captureCutoffRef = useRef(0);
   const captureTimeoutRef = useRef(null);
+  const captureQuietTimeoutRef = useRef(null);
   const captureResolveRef = useRef(null);
 
   const opLockRef = useRef(Promise.resolve());
@@ -122,7 +128,8 @@ export default function Ide() {
   const markerCounterRef = useRef(0);
   const makeMarker = () => `__CMD_${Date.now()}_${(markerCounterRef.current++).toString(36)}__`;
 
-  const CAPTURE_TIMEOUT_MS = 8000;
+  const CAPTURE_TIMEOUT_MS = 8000; // absolute backstop if the device never responds at all
+  const QUIET_MS = 350; // how long the device must go silent before we treat a listing/read as finished
 
   const clearCaptureTimeout = () => {
     if (captureTimeoutRef.current) {
@@ -131,8 +138,16 @@ export default function Ide() {
     }
   };
 
+  const clearQuietTimeout = () => {
+    if (captureQuietTimeoutRef.current) {
+      clearTimeout(captureQuietTimeoutRef.current);
+      captureQuietTimeoutRef.current = null;
+    }
+  };
+
   const resetCaptureState = () => {
     clearCaptureTimeout();
+    clearQuietTimeout();
     captureModeRef.current = null;
     captureBufferRef.current = '';
     captureFilenameRef.current = null;
@@ -159,8 +174,9 @@ export default function Ide() {
     resolveCapture();
   };
 
-  const armWait = () => {
+  const armPlainCapture = () => {
     clearCaptureTimeout();
+    clearQuietTimeout();
     captureTimeoutRef.current = setTimeout(timeoutCapture, CAPTURE_TIMEOUT_MS);
     return new Promise((resolve) => { captureResolveRef.current = resolve; });
   };
@@ -169,6 +185,7 @@ export default function Ide() {
     captureCutoffRef.current = captureBufferRef.current.length;
     captureMarkerRef.current = marker;
     clearCaptureTimeout();
+    clearQuietTimeout();
     captureTimeoutRef.current = setTimeout(timeoutCapture, CAPTURE_TIMEOUT_MS);
     return new Promise((resolve) => { captureResolveRef.current = resolve; });
   };
@@ -212,38 +229,55 @@ export default function Ide() {
     return false;
   };
 
+  const getLanguage = (filename) => {
+    if (!filename) return 'tcl'; // Default to Tcl if no file is open
+    
+    const ext = filename.split('.').pop().toLowerCase();
+    
+    const map = {
+      'tcl': 'tcl',
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'ts': 'typescript',
+      'tsx': 'typescript',
+      'py': 'python',
+      'json': 'json',
+      'css': 'css',
+      'html': 'html',
+      'md': 'markdown',
+      'txt': 'plaintext',
+      'xml': 'xml',
+      'sql': 'sql',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+    };
+
+    return map[ext] || 'plaintext';
+  };
+
   const parseFileListing = (raw) => {
-    const cleanRaw = stripAnsi(raw);
-    const startTag = '___FILESTART___';
-    const marker = captureMarkerRef.current;
+    let cleanRaw = stripAnsi(raw);
+    
+    // 1. Remove the echoed command 'listfiles' if it exists at the start
+    cleanRaw = cleanRaw.replace(/^listfiles\r?\n?/, '').trim();
+    
+    // 2. Remove the trailing prompt if present
+    cleanRaw = cleanRaw.replace(PROMPT_END_RE, '').trim();
 
-    // 1. Find where our data block starts and ends
-    const startIndex = cleanRaw.indexOf(startTag);
-    const endIndex = cleanRaw.indexOf(marker);
-
-    // If we haven't received the full response yet, return empty
-    if (startIndex === -1 || endIndex === -1) {
-      return [];
-    }
-
-    // 2. Extract only the content between the start tag and the marker
-    const content = cleanRaw.substring(startIndex + startTag.length, endIndex);
-
-    // 3. Split by any whitespace (spaces, tabs, newlines) 
-    // and filter out any empty strings resulting from the split
-    const files = content
+    // 3. Split by whitespace, filter, and normalize
+    return cleanRaw
       .split(/\s+/)
       .map(f => f.trim())
       .filter(f => f.length > 0)
-      .map(f => normalizePath(f)); // Keep your path normalization
-
-    return files;
+      .filter(f => f !== 'listfiles') // Failsafe against echoed commands
+      .filter(f => !f.endsWith('#'))  // Failsafe against stray prompt fragments
+      .map(f => normalizePath(f));
   };
 
   const parseFileContent = (raw) => {
     let cleanRaw = stripAnsi(raw);
     
-    // Strip trailing prompt from the file output
+    // Strip trailing prompt from the file output (cosmetic cleanup only)
     cleanRaw = cleanRaw.replace(PROMPT_END_RE, '');
 
     const lines = cleanRaw.split(/\r?\n/);
@@ -259,59 +293,87 @@ export default function Ide() {
     return contentLines.join('\n');
   };
 
+  const finishQuietCapture = (mode) => {
+    captureQuietTimeoutRef.current = null;
+    if (captureModeRef.current !== mode) return; // stale timer from a prior op
+
+    const filename = captureFilenameRef.current;
+    const rawContent = captureBufferRef.current;
+    resetCaptureState();
+
+    if (mode === 'listfiles') {
+      setFiles(parseFileListing(rawContent));
+      setLoadingFiles(false);
+    } else if (mode === 'cat') {
+      setCode(parseFileContent(rawContent));
+      setActiveFile(filename);
+      setLoadingFile(false);
+    }
+
+    resolveCapture();
+  };
+
   const handleIncoming = (text) => {
     if (captureModeRef.current) {
-      captureBufferRef.current += text;
+      // FIX: Echo output to the terminal during 'cat' and 'listfiles'.
+      // Swallowing this output is what swallowed the trailing prompt and 
+      // made the terminal look "eaten" or frozen when the operation finished.
+      if (captureModeRef.current !== 'save') {
+        xtermInstance.current.write(text);
+      }
 
-      // Reset the timeout on every chunk of incoming data — we only want
-      // to time out on true silence from the device, not on total elapsed
-      // time. Large recursive listings can legitimately take a while to
-      // finish streaming, even though data is still actively arriving.
+      captureBufferRef.current += text;
+      const mode = captureModeRef.current;
+      const cleanBuffer = stripAnsi(captureBufferRef.current);
+
+      if (mode === 'save') {
+        clearCaptureTimeout();
+        captureTimeoutRef.current = setTimeout(timeoutCapture, CAPTURE_TIMEOUT_MS);
+
+        const marker = captureMarkerRef.current;
+        if (!marker) return;
+
+        const lastIdx = cleanBuffer.lastIndexOf(marker);
+        if (lastIdx === -1) return;
+
+        const tail = cleanBuffer.slice(lastIdx);
+        let isDone = PROMPT_END_RE.test(tail);
+
+        if (!isDone) {
+          const firstIdx = cleanBuffer.indexOf(marker);
+          if (firstIdx !== -1 && firstIdx !== lastIdx) {
+            const tailAfterMarker = cleanBuffer.slice(lastIdx + marker.length);
+            if (tailAfterMarker.includes('\n') || tailAfterMarker.includes('\r')) {
+              isDone = true;
+            }
+          }
+        }
+
+        if (!isDone) return;
+
+        resetCaptureState();
+        setIsSaving(false);
+        xtermInstance.current.write(`\r\n--- Save Complete ---\r\n`);
+        resolveCapture();
+        refreshFiles(); // This immediately triggers listfiles, which echoes and restores the prompt.
+        return;
+      }
+
+      // --- LISTFILES / CAT ---
       clearCaptureTimeout();
       captureTimeoutRef.current = setTimeout(timeoutCapture, CAPTURE_TIMEOUT_MS);
 
-      const cleanBuffer = stripAnsi(captureBufferRef.current);
-      const mode = captureModeRef.current;
-      let isDone = false;
-
-      if (mode === 'save' || mode === 'listfiles') {
-        const marker = captureMarkerRef.current;
-        if (!marker) return;
-        const markerIdx = cleanBuffer.indexOf(marker);
-        if (markerIdx === -1) return; // Wait until marker arrives
-
-        const tail = cleanBuffer.slice(markerIdx);
-        isDone = PROMPT_END_RE.test(tail);
-      } else {
-        isDone = PROMPT_END_RE.test(cleanBuffer);
-        if (!isDone) {
-          console.log('[capture] not done yet, buffer tail:', JSON.stringify(cleanBuffer.slice(-60)));
-        }
+      if (PROMPT_END_RE.test(cleanBuffer)) {
+        finishQuietCapture(mode);
+        return;
       }
 
-      if (!isDone) return;
-
-      const filename = captureFilenameRef.current;
-      const rawContent = captureBufferRef.current;
-      resetCaptureState();
-
-      if (mode === 'listfiles') {
-        setFiles(parseFileListing(rawContent));
-        setLoadingFiles(false);
-      } else if (mode === 'cat') {
-        setCode(parseFileContent(rawContent));
-        setActiveFile(filename);
-        setLoadingFile(false);
-      } else if (mode === 'save') {
-        setIsSaving(false);
-        xtermInstance.current.write(`\r\n--- Save Complete ---\r\n`);
-      }
-
-      resolveCapture();
-      if (mode === 'save') refreshFiles();
+      clearQuietTimeout();
+      captureQuietTimeoutRef.current = setTimeout(() => finishQuietCapture(mode), QUIET_MS);
       return;
     }
 
+    // Standard terminal pass-through when idle
     xtermInstance.current.write(text);
   };
 
@@ -368,9 +430,17 @@ export default function Ide() {
         }
       })();
 
-      setTimeout(() => {
+      // Pulse a hard reset on every connect so we always start from a known,
+      // clean boot rather than whatever the device happened to be doing
+      // before we attached.
+      await hardReset();
+
+      // Nudge with a bare \r once the device has had time to reboot and
+      // print its boot banner — this console appears to need some input to
+      // arrive before it draws its first prompt.
+      /*setTimeout(() => {
         if (writerRef.current) slowWrite('\r');
-      }, 300);
+      }, 1500);*/
 
       await readLoop;
     }
@@ -404,18 +474,12 @@ export default function Ide() {
     captureModeRef.current = 'listfiles';
     captureBufferRef.current = '';
     captureFilenameRef.current = null;
+    captureCommandRef.current = 'listfiles'; // Used to strip the echo
     setLoadingFiles(true);
 
-    const marker = makeMarker();
-    const done = armCaptureAndWait(marker);
+    const done = armPlainCapture();
+    await slowWrite(`listfiles\r`); // Just send the native command — completion is detected via silence
 
-    // 1. A single, short string! No buffer overflows.
-    // Spaces protect the semicolons, and ;# protects the \r from the parser.
-    const cmd = `puts "___FILESTART___" ; puts [listfiles] ; puts "${marker}" ;# \r`;
-    
-    // We can use standard write here instead of slowWrite because the command is short
-    await writerRef.current.write(cmd);
-    
     await done;
   });
 
@@ -427,8 +491,9 @@ export default function Ide() {
     captureCommandRef.current = `cat ${filename}`;
     setLoadingFile(true);
 
-    const done = armWait();
+    const done = armPlainCapture();
     await slowWrite(`cat ${filename}\r`);
+
     await done;
   });
 
@@ -568,7 +633,7 @@ export default function Ide() {
         <div className="flex-[3] min-h-0">
           <Editor
             theme="vs-dark"
-            language="tcl"
+            language={getLanguage(activeFile)}
             value={code}
             onChange={setCode}
             options={{ minimap: { enabled: false } }}
