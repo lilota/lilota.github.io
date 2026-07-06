@@ -12,7 +12,7 @@ export default function Flash() {
           </p>
 
           <div className="mt-6 grid gap-3 text-sm text-white/85 sm:grid-cols-3">
-            <div className="border-l-2 border-white/35 pl-3">Use Chrome or Edge</div>
+            <div className="border-l-2 border-white/35 pl-3">Use Chrome or Firefox</div>
             <div className="border-l-2 border-white/35 pl-3">Select the USB serial port</div>
             <div className="border-l-2 border-white/35 pl-3">Keep the device connected</div>
           </div>
