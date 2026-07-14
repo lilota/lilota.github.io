@@ -1,37 +1,5 @@
 {
   "schemaVersion": 1,
   "builds": [
-    {
-      "id": "c249f1fb0db504ba4b344a1f041ac5756d1a75f3",
-      "channel": "development",
-      "sourceRef": "flower",
-      "commit": "c249f1fb0db504ba4b344a1f041ac5756d1a75f3",
-      "commitShort": "c249f1fb",
-      "commitSubject": "fix(actions): build merged image",
-      "committedAt": "2026-07-14T17:32:53Z",
-      "publishedAt": "2026-07-14T17:38:31Z",
-      "deviceTargets": [
-        {
-          "family": "ESP32"
-        }
-      ],
-      "firmwareUrl": "lilota/builds/c249f1fb0db504ba4b344a1f041ac5756d1a75f3/lilota-webflash.bin"
-    },
-    {
-      "id": "bafdf87c207aa379609271f78744095c6ff175b3",
-      "channel": "development",
-      "sourceRef": "main",
-      "commit": "bafdf87c207aa379609271f78744095c6ff175b3",
-      "commitShort": "bafdf87c",
-      "commitSubject": "fix(actions): use conventional commit message",
-      "committedAt": "2026-07-14T15:48:14Z",
-      "publishedAt": "2026-07-14T15:53:51Z",
-      "deviceTargets": [
-        {
-          "family": "ESP32"
-        }
-      ],
-      "firmwareUrl": "lilota/builds/bafdf87c207aa379609271f78744095c6ff175b3/lilota-webflash.bin"
-    }
   ]
 }
