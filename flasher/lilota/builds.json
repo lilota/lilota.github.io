@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "builds": [
     {
+      "id": "8a354e2ff7a3adc672e2b4601e3aa914e2f484d0",
+      "channel": "development",
+      "sourceRef": "main",
+      "commit": "8a354e2ff7a3adc672e2b4601e3aa914e2f484d0",
+      "commitShort": "8a354e2f",
+      "commitSubject": "revert: fix(actions): use install esp-idf action",
+      "committedAt": "2026-07-14T18:25:56Z",
+      "publishedAt": "2026-07-14T18:40:50Z",
+      "deviceTargets": [
+        {
+          "family": "ESP32"
+        }
+      ],
+      "firmwareUrl": "lilota/builds/8a354e2ff7a3adc672e2b4601e3aa914e2f484d0/lilota-webflash.bin"
+    },
+    {
       "id": "52d4800ab678f7691929af44fe467b0440c25721",
       "channel": "development",
       "sourceRef": "main",
