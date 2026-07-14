@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "builds": [
     {
+      "id": "52d4800ab678f7691929af44fe467b0440c25721",
+      "channel": "development",
+      "sourceRef": "main",
+      "commit": "52d4800ab678f7691929af44fe467b0440c25721",
+      "commitShort": "52d4800a",
+      "commitSubject": "fix(actions): fix the building of the merging",
+      "committedAt": "2026-07-14T18:06:48Z",
+      "publishedAt": "2026-07-14T18:13:19Z",
+      "deviceTargets": [
+        {
+          "family": "ESP32"
+        }
+      ],
+      "firmwareUrl": "lilota/builds/52d4800ab678f7691929af44fe467b0440c25721/lilota-webflash.bin"
+    },
+    {
       "id": "bafdf87c207aa379609271f78744095c6ff175b3",
       "channel": "development",
       "sourceRef": "main",
