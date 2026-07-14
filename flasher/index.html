@@ -1,11 +1,26 @@
 <!doctype html>
-<html lang="en" class="light">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/flasher/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        const storedTheme = localStorage.getItem("lilota-flasher-theme");
+        const theme =
+          storedTheme === "light" || storedTheme === "dark"
+            ? storedTheme
+            : matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        document.documentElement.classList.add(theme);
+        document.documentElement.style.colorScheme = theme;
+      } catch {
+        document.documentElement.classList.add("light");
+      }
+    </script>
     <title>Lilota Flasher</title>
-    <script type="module" crossorigin src="/flasher/assets/index-B951ajYN.js"></script>
+    <script type="module" crossorigin src="/flasher/assets/index-k0tR0Msl.js"></script>
     <link rel="stylesheet" crossorigin href="/flasher/assets/index-DbvnPqhe.css">
   </head>
   <body>
