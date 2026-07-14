@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "builds": [
     {
+      "id": "0c0290cad675163a06f70328844ea6f3ccb104cf",
+      "channel": "development",
+      "sourceRef": "Ilan",
+      "commit": "0c0290cad675163a06f70328844ea6f3ccb104cf",
+      "commitShort": "0c0290ca",
+      "commitSubject": "rtc: restructure into rtc time and tzset subcommands",
+      "committedAt": "2026-07-14T17:34:05Z",
+      "publishedAt": "2026-07-14T20:44:44Z",
+      "deviceTargets": [
+        {
+          "family": "ESP32"
+        }
+      ],
+      "firmwareUrl": "lilota/builds/0c0290cad675163a06f70328844ea6f3ccb104cf/lilota-webflash.bin"
+    },
+    {
       "id": "8a354e2ff7a3adc672e2b4601e3aa914e2f484d0",
       "channel": "development",
       "sourceRef": "main",
