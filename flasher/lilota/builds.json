@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "builds": [
     {
+      "id": "6a6a0bbb15534eafdbe992763f677982b34d0122",
+      "channel": "development",
+      "sourceRef": "main",
+      "commit": "6a6a0bbb15534eafdbe992763f677982b34d0122",
+      "commitShort": "6a6a0bbb",
+      "commitSubject": "fix(esp8266): use correct uart vfs header",
+      "committedAt": "2026-07-23T15:02:23Z",
+      "publishedAt": "2026-07-23T15:34:57Z",
+      "deviceTargets": [
+        {
+          "family": "ESP32"
+        }
+      ],
+      "firmwareUrl": "lilota/builds/6a6a0bbb15534eafdbe992763f677982b34d0122/lilota-webflash.bin"
+    },
+    {
       "id": "0c0290cad675163a06f70328844ea6f3ccb104cf",
       "channel": "development",
       "sourceRef": "Ilan",
